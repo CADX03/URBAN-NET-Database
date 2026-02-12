@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+  # 1. The Context Broker
+  orion:
+    image: fiware/orion-ld
+    ports:
+      - "1026:1026"
+    command: -dbhost mongo -logLevel DEBUG
+    depends_on:
+      - mongo
+
+  # 2. MongoDB (Required for Orion Internal State)
+  mongo:
+    image: mongo:4.4
+    command: --nojournal
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-db:/data/db
+
+  # 3. The Connector (Bridge to Postgres)
+  cygnus:
+    image: fiware/cygnus-ngsi
+    ports:
+      - "5055:5055"  # Important: Expose the notification port if you need to debug from outside, though internal is fine.
+      - "5080:5080"
+    environment:
+      - "CYGNUS_POSTGRESQL_HOST=postgres"
+      - "CYGNUS_POSTGRESQL_PORT=5432"
+      - "CYGNUS_POSTGRESQL_USER=myuser"        # CHANGED: Must match POSTGRES_USER
+      - "CYGNUS_POSTGRESQL_PASS=mypassword"    # CHANGED: Must match POSTGRES_PASSWORD
+      - "CYGNUS_POSTGRESQL_DATABASE=postgres"   # Added: Target specific DB
+      - "CYGNUS_POSTGRESQL_ENABLE_CACHE=true"
+      - "CYGNUS_LOG_LEVEL=DEBUG"
+      - "CYGNUS_API_PORT=5080"
+      # This configures the internal Flume agent to use the PostgreSQL sink
+      - "CYGNUS_AGENT_NAME=cygnus-ngsi"
+    depends_on:
+      - postgres
+
+  # 4. Your PostgreSQL Database (Target for History)
+  postgres:
+    image: postgres:12
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+
+volumes:
+  mongo-db:
+  postgres-db:
