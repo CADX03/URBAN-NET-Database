@@ -50,38 +50,41 @@ use orion
 db.entities.find().pretty()
 ```
 
-## Postgres SQL
+## Timesacle DB
 
-I can't connect the this database to the orion.
-
-Change to the postgres database:
+Change to the postgres database and Trigger a Change:
 
 ```bash
-curl -iX POST 'http://localhost:1026/ngsi-ld/v1/subscriptions/' \
--H 'Content-Type: application/json' \
--d '{
-  "description": "Notify Cygnus of Sensor changes",
-  "type": "Subscription",
-  "entities": [{"type": "Sensor"}],
-  "notification": {
-    "endpoint": {
-      "uri": "http://urban-net-database-cygnus-1:5050/notify",
-      "accept": "application/json"
-    }
-  }
-}'
+curl http://localhost:8668/v2/notify -i -H 'Content-Type: application/json' -d @- <<EOF
+{ 
+    "subscriptionId": "5ce3dbb331dfg9h71aad5deeaa", 
+    "data": [ 
+        { 
+            "id": "Room1", 
+            "temperature": { "value": "10", "type": "Number" }, 
+            "pressure": { "value": "12", "type": "Number" }, 
+            "type": "Room" 
+        } 
+    ] 
+}
+EOF
 ```
 
-Trigger a Change
+See the change on QuantumLeap API:
+
 ```bash
-curl -iX PATCH 'http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:Sensor:001/attrs' \
--H 'Content-Type: application/json' \
--d '{ "temperature": { "type": "Property", "value": 30.5 } }'
+curl -X GET "http://localhost:8668/v2/entities/Room1"
 ```
 
-
-Enter the postgres databse
+Query TimescaleDB Directly:
 
 ```bash
-docker exec -it urban-net-database-postgres-1 psql -U myuser -d postgres
+#Enter the TimescaleDB container
+docker compose exec timescale psql -U postgres -d postgres
+
+#List the tables
+\dt
+
+#Query the table
+SELECT * FROM etroom;
 ```
