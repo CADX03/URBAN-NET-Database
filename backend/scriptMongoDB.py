@@ -35,4 +35,4 @@ def send_data_to_broker(file_path):
 
 if __name__ == "__main__":
     # Run the function pointing to your JSON file
-    send_data_to_broker('./../data.json')
+    send_data_to_broker('./../data/data.json')

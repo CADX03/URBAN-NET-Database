@@ -35,4 +35,4 @@ def send_notification_to_quantumleap(file_path):
 
 if __name__ == "__main__":
     # Point the function to your newly created JSON file
-    send_notification_to_quantumleap('./../notification_data.json')
+    send_notification_to_quantumleap('./../data/notification_data.json')

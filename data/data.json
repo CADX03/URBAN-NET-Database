@@ -1,5 +1,5 @@
 {
-  "id": "urn:ngsi-ld:Sensor:001",
+  "id": "urn:ngsi-ld:Sensor:002",
   "type": "Sensor",
   "temperature": {
     "type": "Property",
