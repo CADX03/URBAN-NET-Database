@@ -1,0 +1,8 @@
+{
+  "id": "urn:ngsi-ld:Sensor:001",
+  "type": "Sensor",
+  "temperature": {
+    "type": "Property",
+    "value": 25.5
+  }
+}
