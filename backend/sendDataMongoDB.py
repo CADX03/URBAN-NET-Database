@@ -3,7 +3,7 @@ import requests
 
 def send_data_to_broker(file_path):
     # The URL from your curl command
-    url = 'http://localhost:1026/ngsi-ld/v1/entities'
+    url = 'http://orion:1026/ngsi-ld/v1/entities'
     
     # The headers from your curl command
     headers = {

@@ -6,7 +6,7 @@ def get_sensor_data(entity_id=None, entity_type="Sensor"):
     If entity_id is provided, gets that specific entity.
     If entity_id is None, retrieves all entities of the specified entity_type.
     """
-    base_url = 'http://localhost:1026/ngsi-ld/v1/entities'
+    base_url = 'http://orion:1026/ngsi-ld/v1/entities'
     
     # We will use this dictionary to handle our query parameters securely
     query_params = {}

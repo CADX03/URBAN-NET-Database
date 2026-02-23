@@ -7,7 +7,7 @@ def get_timescale_data(entity_id=None, entity_type=None):
     If entity_id is None, retrieves historical data for all entities.
     """
     # Base URL for the QuantumLeap entities endpoint
-    base_url = 'http://localhost:8668/v2/entities'
+    base_url = 'http://quantumleap:8668/v2/entities'
     
     query_params = {}
 

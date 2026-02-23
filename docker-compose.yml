@@ -1,4 +1,17 @@
 services:
+  # Frontend (Streamlit UI)
+  frontend:
+    build: .
+    ports:
+      - "8501:8501" # Access UI at http://localhost:8501
+    depends_on:
+      - orion
+      - quantumleap
+    environment:
+      # Pass these env vars if your python functions support them
+      - ORION_HOST=orion
+      - QL_HOST=quantumleap
+      - TIMESCALE_HOST=timescale
   # 1. Orion-LD Context Broker
   orion:
     image: fiware/orion-ld
