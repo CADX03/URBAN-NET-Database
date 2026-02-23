@@ -1,5 +1,15 @@
 # URBAN-NET-Database
 
+## WEBSITE
+Start the project
+
+```bash
+docker-compose up --build
+```
+
+LINK: http://localhost:8501
+
+
 ## Mongo DB
 First comand:
 
