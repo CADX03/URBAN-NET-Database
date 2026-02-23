@@ -3,7 +3,7 @@ import requests
 
 def send_notification_to_quantumleap(file_path):
     # The QuantumLeap notify endpoint from your curl command
-    url = 'http://localhost:8668/v2/notify'
+    url = 'http://quantumleap:8668/v2/notify'
     
     # The headers ensuring the payload is treated as JSON
     headers = {

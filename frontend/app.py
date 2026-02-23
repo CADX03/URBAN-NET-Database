@@ -67,11 +67,11 @@ with tab1:
             else:
                 st.warning("Please upload a file first.")
 
-# === TAB 2: GET DATA ===
+# === TAB 2: GET DATA Mongo DB ===
 with tab2:
     st.header("Data Visualization")
     
-    # Sidebar for inputs
+    # Shared sidebar/inputs for both tabs
     with st.container():
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
@@ -83,12 +83,12 @@ with tab2:
             st.write("") 
             refresh = st.button("Fetch Data")
 
-    col_realtime, col_history = st.columns(2)
+    # Create the two separate tabs here instead of columns
+    tab_realtime, tab_history = st.tabs(["⏱️ Current State (MongoDB)", "📈 History (TimescaleDB)"])
 
     if refresh:
         # --- Real-time Data (Orion) ---
-        with col_realtime:
-            st.subheader("⏱️ Current State (MongoDB/Orion)")
+        with tab_realtime:
             try:
                 # Calling your function
                 current_data = get_sensor_data(entity_id=entity_id, entity_type=entity_type)
@@ -97,11 +97,9 @@ with tab2:
                 st.error(f"Could not fetch Orion data: {e}")
 
         # --- Historical Data (Timescale) ---
-        with col_history:
-            st.subheader("📈 History (TimescaleDB)")
+        with tab_history:
             try:
                 # Calling your function
-                # Assuming this returns a list of dicts or a Pandas DataFrame
                 history_data = get_timescale_data(entity_id=entity_id, entity_type=entity_type)
                 
                 if history_data:
@@ -113,8 +111,7 @@ with tab2:
                     
                     st.dataframe(df.head())
                     
-                    # Simple Line Chart logic (assumes a 'value' and 'time_index' column exists)
-                    # You might need to adjust column names based on your DB schema
+                    # Simple Line Chart logic
                     numeric_cols = df.select_dtypes(include=['float', 'int']).columns
                     if len(numeric_cols) > 0:
                         st.line_chart(df[numeric_cols])
