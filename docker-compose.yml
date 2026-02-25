@@ -47,7 +47,7 @@ services:
 
   # 4. TimescaleDB (This IS PostgreSQL + TimeSeries plugin)
   timescale:
-    image: timescale/timescaledb:latest-pg12
+    image: timescale/timescaledb-postgis:latest-pg12
     ports:
       - "5432:5432"
     environment:

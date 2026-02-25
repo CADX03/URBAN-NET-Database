@@ -1,0 +1,278 @@
+[
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad615bb3da2520542bc87fb",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1009
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-24T13:50:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.85
+    },
+    "solarRadiation": {
+      "type": "Property",
+      "value": 195.1
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 13.8
+    },
+    "uv_index": {
+      "type": "Property",
+      "value": 4
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 258
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 1.2500001
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad616a53da2520542bc8859",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1026
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-20T16:30:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.67
+    },
+    "solarRadiation": {
+      "type": "Property",
+      "value": 256.4
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 14.1
+    },
+    "uVIndexMax": {
+      "type": "Property",
+      "value": 0
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 23
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 1.58333346
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6eb0dde591949bb8b5e",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1003.1
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-24T13:40:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.746
+    },
+    "solarRadiation": {
+      "type": "Property",
+      "value": 496
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 14.6
+    },
+    "uVIndexMax": {
+      "type": "Property",
+      "value": 5
+    },
+    "uv_index": {
+      "type": "Property",
+      "value": 5
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 277
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 1.55555568
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6cc0dde591949bb8b5c",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1004
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-24T13:50:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.75
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 14.9
+    },
+    "uVIndexMax": {
+      "type": "Property",
+      "value": 1
+    },
+    "uv_index": {
+      "type": "Property",
+      "value": 1
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 226
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 1.22222232
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6dc0dde591949bb8b5d",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1029
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-20T16:30:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.7
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 13.2
+    },
+    "uVIndexMax": {
+      "type": "Property",
+      "value": 0
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 360
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 2.3611113
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad613dd3da2520542bc871a",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1028
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-20T16:30:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.72
+    },
+    "solarRadiation": {
+      "type": "Property",
+      "value": 246.6
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 13.7
+    },
+    "uVIndexMax": {
+      "type": "Property",
+      "value": 0
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 7
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 3.66666696
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6b60dde591949bb8b5b",
+    "type": "WeatherObserved",
+    "atmosphericPressure": {
+      "type": "Property",
+      "value": 1030
+    },
+    "dateObserved": {
+      "type": "Property",
+      "value": "2026-02-20T16:30:00.00Z"
+    },
+    "precipitation": {
+      "type": "Property",
+      "value": 0
+    },
+    "relativeHumidity": {
+      "type": "Property",
+      "value": 0.67
+    },
+    "temperature": {
+      "type": "Property",
+      "value": 13.9
+    },
+    "uVIndexMax": {
+      "type": "Property",
+      "value": 0
+    },
+    "windDirection": {
+      "type": "Property",
+      "value": 337
+    },
+    "windSpeed": {
+      "type": "Property",
+      "value": 3.86111142
+    }
+  }
+]

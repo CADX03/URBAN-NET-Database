@@ -1,0 +1,128 @@
+[
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad615bb3da2520542bc87fb",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.6039153,
+          41.1617238
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "Marqu\u00eas "
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad616a53da2520542bc8859",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.6031072,
+          41.1837688
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "Hospital S.Jo\u00e3o"
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6eb0dde591949bb8b5e",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.605194,
+          41.180222
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "P\u00f3lo Asprela"
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6cc0dde591949bb8b5c",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.6100479,
+          41.1518265
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "Trindade"
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6dc0dde591949bb8b5d",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.5907964,
+          41.1625965
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "Av. Fern\u00e3o de Magalh\u00e3es"
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad613dd3da2520542bc871a",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.5980819,
+          41.148427
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "Campo 24 de Agosto"
+    }
+  },
+  {
+    "id": "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5b87a6b60dde591949bb8b5b",
+    "type": "Location",
+    "location": {
+      "type": "geo:json",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -8.6882191,
+          41.1734336
+        ]
+      }
+    },
+    "name": {
+      "type": "Property",
+      "value": "An\u00e9mona"
+    }
+  }
+]

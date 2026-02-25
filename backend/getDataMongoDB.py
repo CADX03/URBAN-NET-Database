@@ -1,6 +1,6 @@
 import requests
 
-def get_sensor_data(entity_id=None, entity_type="Sensor"):
+def get_sensor_data(entity_id=None, entity_type=None):
     """
     Retrieves data from the NGSI-LD API.
     If entity_id is provided, gets that specific entity.
