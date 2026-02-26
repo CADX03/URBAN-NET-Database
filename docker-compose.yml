@@ -55,7 +55,18 @@ services:
       - POSTGRES_PASSWORD=password
     volumes:
       - postgres-db:/var/lib/postgresql/data
-
+      
+# 5. Keycloak (Identity & Access Management)
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    command: start-dev
+    ports:
+      - "8080:8080" # Access Keycloak admin console at http://localhost:8080
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    depends_on:
+      - timescale # Optional: just to ensure backend data layer is up first
 volumes:
   mongo-db:
   postgres-db:

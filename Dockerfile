@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install python libraries
 # requests is needed for API calls, pandas for data handling, streamlit for UI
-RUN pip install streamlit pandas requests
+RUN pip install streamlit pandas requests streamlit-oauth
 
 # Copy your python files into the container
 COPY ./frontend/app.py .
