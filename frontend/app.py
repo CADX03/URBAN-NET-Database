@@ -9,8 +9,8 @@ from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap
 
 
-st.set_page_config(page_title="FIWARE IoT Dashboard", layout="wide")
-st.title("🎛️ FIWARE Sensor Dashboard")
+st.set_page_config(page_title="URBAN-NET Database", layout="wide")
+st.title("🎛️ URBAN-NET Database")
 
 # --- Helper to handle file uploads for your functions ---
 def save_uploaded_file(uploaded_file):
@@ -75,9 +75,9 @@ with tab2:
     with st.container():
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
-            entity_id = st.text_input("Entity ID", value="urn:ngsi-ld:Sensor:001")
+            entity_id = st.text_input("Entity ID", value="")
         with c2:
-            entity_type = st.text_input("Entity Type", value="Sensor")
+            entity_type = st.text_input("Entity Type", value="")
         with c3:
             st.write("") # Spacer
             st.write("") 
