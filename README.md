@@ -98,3 +98,29 @@ docker compose exec timescale psql -U postgres -d postgres
 #Query the table
 SELECT * FROM etroom;
 ```
+
+## Login (Keycloak)
+
+1. Go to http://localhost:8080 and log in with the credentials admin / admin.
+
+2. Create a Realm: Hover over the "master" realm in the top-left dropdown and click Create Realm. Name it fiware-realm.
+
+3. Create a Client: * Go to Clients -> Create client.
+
+  - Client ID: streamlit-app
+
+  - Click Next. Ensure "Standard flow" (OAuth2) is enabled.
+
+  - Click Next.
+
+  - Valid redirect URIs: http://localhost:8501/* (This is crucial; it tells Keycloak it's safe to send tokens back to your Streamlit UI).
+
+  - Web origins: http://localhost:8501
+
+  - Click Save.
+
+4. Create a User:
+
+  - Go to Users -> Add user. Set a username (e.g., testuser) and click Create.
+
+  - Go to the Credentials tab for that user, click Set password, type a password, and toggle "Temporary" to Off.
