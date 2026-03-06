@@ -124,3 +124,11 @@ SELECT * FROM etroom;
   - Go to Users -> Add user. Set a username (e.g., testuser) and click Create.
 
   - Go to the Credentials tab for that user, click Set password, type a password, and toggle "Temporary" to Off.
+
+5. Create a Role:
+
+  - Created a Realm Role named admin.
+
+  - Assigned that admin role to your test user.
+
+  - Ensured that Client Scopes -> roles -> Mappers -> realm roles is configured to add the realm roles to the Access Token. (This is usually configured this way by default in modern Keycloak versions).

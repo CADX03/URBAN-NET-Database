@@ -9,15 +9,15 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python libraries
-# requests is needed for API calls, pandas for data handling, streamlit for UI
-RUN pip install streamlit pandas requests streamlit-oauth
+# Copy the requirements file FIRST to leverage Docker cache
+COPY requirements.txt .
+
+# Install python libraries from the requirements file
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy your python files into the container
 COPY ./frontend/app.py .
-
 COPY backend/ ./backend/
-# ^ Ensure your functions are in backend_logic.py or inside app.py
 
 # Expose Streamlit's default port
 EXPOSE 8501
