@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import tempfile
+import json
 from streamlit_oauth import OAuth2Component
 
 from backend.getDataMongoDB import get_sensor_data
@@ -138,7 +139,25 @@ else:
             with tab_realtime:
                 try:
                     current_data = get_sensor_data(entity_id=entity_id, entity_type=entity_type)
-                    st.json(current_data)
+                    
+                    # Display the JSON nicely
+                    #st.json(current_data)
+                    
+                    # NEW: Format as string for copying/downloading
+                    json_str = json.dumps(current_data, indent=2)
+                    
+                    # NEW: Add a download button
+                    st.download_button(
+                        label="📄 Download JSON",
+                        data=json_str,
+                        file_name=f"current_data_{entity_id}.json",
+                        mime="application/json"
+                    )
+                    
+                    # NEW: Render as a code block (provides a native 'Copy' icon on hover)
+                    st.write("Or copy raw JSON:")
+                    st.code(json_str, language="json")
+
                 except Exception as e:
                     st.error(f"Could not fetch Orion data: {e}")
 
@@ -154,6 +173,15 @@ else:
                             df = history_data
                         
                         st.dataframe(df.head())
+                        
+                        # NEW: Add a download button for the dataframe as a CSV
+                        csv_data = df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="📊 Download CSV",
+                            data=csv_data,
+                            file_name=f"historical_data_{entity_id}.csv",
+                            mime="text/csv"
+                        )
                         
                         numeric_cols = df.select_dtypes(include=['float', 'int']).columns
                         if len(numeric_cols) > 0:
