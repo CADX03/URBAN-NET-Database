@@ -101,43 +101,60 @@ def csv_to_ngsild(input_csv, output_json):
         
     print(f"Successfully converted {len(ngsi_ld_entities)} records to NGSI-LD format in '{output_json}'.")
 
-def convert_csv_to_ngsild(csv_file_path):
+def convert_csv_to_ngsild(csv_file_path, selected_columns):
     ngsi_ld_entities = []
     with open(csv_file_path, mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
+        
         for row in reader:
-            raw_date = row.get("AGG_PERIOD_START", "")
-            try:
-                date_obj = datetime.strptime(raw_date, "%Y-%m-%d %H:%M:%S")
-                iso_date = date_obj.isoformat() + "Z"
-            except ValueError:
-                iso_date = raw_date 
-
+            # We always extract the ID (fallback to 'unknown' if missing)
+            entity_id = row.get('AGGREGATE_BY_LANE_BUNDLEID', 'unknown')
+            
+            # Base NGSI-LD Structure
             entity = {
-                "id": f"urn:ngsi-ld:TrafficFlowObserved:{row.get('AGGREGATE_BY_LANE_BUNDLEID', 'unknown')}",
+                "id": f"urn:ngsi-ld:TrafficFlowObserved:{entity_id}",
                 "type": "TrafficFlowObserved",
                 "@context": [
                     "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
                     "https://raw.githubusercontent.com/smart-data-models/dataModel.Transportation/master/context.jsonld"
-                ],
-                "dateObserved": {"type": "Property", "value": {"@type": "DateTime", "@value": iso_date}},
-                "equipmentId": {"type": "Property", "value": row.get("EQUIPMENTID")},
-                "laneDirection": {"type": "Property", "value": row.get("LANE_BUNDLE_DIRECTION")},
-                "intensity": {"type": "Property", "value": convert_to_number(row.get("TOTAL_VOLUME"))},
-                "averageVehicleSpeed": {"type": "Property", "value": convert_to_number(row.get("AVG_SPEED_ARITHMETIC"))},
-                "occupancy": {"type": "Property", "value": convert_to_number(row.get("OCCUPANCY"))},
-                "axleClassVolumes": {"type": "Property", "value": parse_axle_volumes(row.get("AXLE_CLASS_VOLUMES", ""))}
+                ]
             }
 
-            skip_keys = {"AGGREGATE_BY_LANE_BUNDLEID", "AGG_PERIOD_START", "EQUIPMENTID", 
-                         "LANE_BUNDLE_DIRECTION", "TOTAL_VOLUME", "AVG_SPEED_ARITHMETIC", 
-                         "OCCUPANCY", "AXLE_CLASS_VOLUMES"}
-            
-            for key, value in row.items():
-                if key not in skip_keys and value is not None:
-                    entity[key] = {"type": "Property", "value": convert_to_number(value)}
+            # Only process the columns the user explicitly selected
+            for col in selected_columns:
+                val = row.get(col)
+                if val is None or val == "":
+                    continue
 
-            ngsi_ld_entities.append(entity)
+                # Map specific traffic data model attributes
+                if col == "AGG_PERIOD_START":
+                    try:
+                        date_obj = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+                        iso_date = date_obj.isoformat() + "Z"
+                    except ValueError:
+                        iso_date = val 
+                    entity["dateObserved"] = {"type": "Property", "value": {"@type": "DateTime", "@value": iso_date}}
+                
+                elif col == "EQUIPMENTID":
+                    entity["equipmentId"] = {"type": "Property", "value": val}
+                elif col == "LANE_BUNDLE_DIRECTION":
+                    entity["laneDirection"] = {"type": "Property", "value": val}
+                elif col == "TOTAL_VOLUME":
+                    entity["intensity"] = {"type": "Property", "value": convert_to_number(val)}
+                elif col == "AVG_SPEED_ARITHMETIC":
+                    entity["averageVehicleSpeed"] = {"type": "Property", "value": convert_to_number(val)}
+                elif col == "OCCUPANCY":
+                    entity["occupancy"] = {"type": "Property", "value": convert_to_number(val)}
+                elif col == "AXLE_CLASS_VOLUMES":
+                    entity["axleClassVolumes"] = {"type": "Property", "value": parse_axle_volumes(val)}
+                elif col == "AGGREGATE_BY_LANE_BUNDLEID":
+                    pass # Handled in the entity ID above, no need to duplicate as a property
+                
+                # For any other generic column selected
+                else:
+                    entity[col] = {"type": "Property", "value": convert_to_number(val)}
+
+            ngsi_ld_entities.append(entity)        
     return ngsi_ld_entities
 
 # Run the function
