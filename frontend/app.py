@@ -178,21 +178,25 @@ else:
                 try:
                     history_data = get_timescale_data(entity_id=entity_id, entity_type=entity_type)
                     if history_data:
-                        df = pd.DataFrame(history_data) if not isinstance(history_data, pd.DataFrame) else history_data
-                        st.dataframe(df.head())
                         
-                        csv_data = df.to_csv(index=False).encode('utf-8')
+                        # --- 1. JSON DISPLAY & DOWNLOAD ---
+                        st.subheader("Raw Data (JSON)")
+                        json_str_history = json.dumps(history_data, indent=2)
+                        
                         st.download_button(
-                            label="📊 Download CSV",
-                            data=csv_data, file_name=f"historical_data_{entity_id}.csv", mime="text/csv"
+                            label="📄 Download JSON",
+                            data=json_str_history, 
+                            file_name=f"historical_data_{entity_id}.json", 
+                            mime="application/json"
                         )
                         
-                        numeric_cols = df.select_dtypes(include=['float', 'int']).columns
-                        if len(numeric_cols) > 0:
-                            st.line_chart(df[numeric_cols])
-                        else:
-                            st.warning("No numeric data found to chart.")
+                        st.write("Or copy raw JSON:")
+                        st.code(json_str_history, language="json")
+                            
+                        st.divider() # Adds a nice visual break
+
                     else:
                         st.warning("No historical data found.")
+                
                 except Exception as e:
                     st.error(f"Could not fetch Timescale data: {e}")

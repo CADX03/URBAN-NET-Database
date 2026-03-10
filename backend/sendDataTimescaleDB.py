@@ -3,7 +3,7 @@ import requests
 
 def send_notification_to_quantumleap(file_path):
     # The QuantumLeap notify endpoint from your curl command
-    url = 'http://localhost:8668/v2/notify'
+    url = 'http://quantumleap:8668/v2/notify'
     
     # The headers ensuring the payload is treated as JSON
     headers = {
@@ -36,4 +36,4 @@ def send_notification_to_quantumleap(file_path):
 
 if __name__ == "__main__":
     # Point the function to your newly created JSON file
-    send_notification_to_quantumleap('./../data/weatherPortoHistorical_NGSILD.json')
+    send_notification_to_quantumleap('./../data/weatherPortoRealTime_NGSILD.json')

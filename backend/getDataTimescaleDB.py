@@ -39,7 +39,7 @@ def get_timescale_data(entity_id=None, entity_type=None):
 if __name__ == "__main__":
     
     print("--- Fetching history for a specific ID ('Room2') ---")
-    specific_id = "Room2"
+    specific_id = "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad615bb3da2520542bc87fb"
     specific_data = get_timescale_data(entity_id=specific_id)
     print(specific_data)
     
@@ -47,4 +47,4 @@ if __name__ == "__main__":
     # Calling without an ID gets all data. 
     # Optional: You can pass entity_type="Room" to filter the results.
     all_data = get_timescale_data() 
-    print(all_data)
+    #print(all_data)
