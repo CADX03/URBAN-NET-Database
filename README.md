@@ -10,6 +10,11 @@ docker-compose up --build
 LINK: http://localhost:8501
 
 
+Stop the project
+```bash
+docker-compose down -v
+```
+
 ## Mongo DB
 First comand:
 

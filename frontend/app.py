@@ -10,6 +10,7 @@ from backend.getDataMongoDB import get_sensor_data
 from backend.getDataTimescaleDB import get_timescale_data
 from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap
+from backend.parserCSV import convert_csv_to_ngsild
 
 # --- Keycloak Configuration ---
 AUTHORIZE_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/auth"
@@ -23,9 +24,9 @@ st.set_page_config(page_title="URBAN-NET Database", layout="wide")
 
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, TOKEN_URL, REVOKE_URL)
 
-def save_uploaded_file(uploaded_file):
+def save_uploaded_file(uploaded_file, suffix=".json"):
     if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
             return tmp_file.name
     return None
@@ -89,13 +90,13 @@ else:
     
     # If Admin -> Show both tabs
     if is_admin:
-        tabs = st.tabs(["📤 Send Data (Ingestion)", "📊 Get Data (Visualization)"])
-        tab_ingestion = tabs[0]
-        tab_visualization = tabs[1]
+        tabs = st.tabs(["📤 Send Data (Ingestion)", "🔄 Convert CSV", "📊 Get Data (Visualization)"])
+        tab_ingestion, tab_conversion, tab_visualization = tabs[0], tabs[1], tabs[2]
     # If Normal User -> Only create one tab
     else:
         tabs = st.tabs(["📊 Get Data (Visualization)"])
         tab_ingestion = None
+        tab_conversion = None
         tab_visualization = tabs[0]
 
     # === TAB 1: SEND DATA (Only renders if tab_ingestion exists) ===
@@ -139,6 +140,55 @@ else:
                             os.remove(temp_path)
                     else:
                         st.warning("Please upload a file first.")
+
+    # === TAB 2: CONVERT CSV ===
+    if tab_conversion is not None:
+        with tab_conversion:
+            st.header("CSV to NGSI-LD Converter")
+            st.info("Upload your raw traffic CSV to automatically convert it into the NGSI-LD standard. You can download the result or send it straight to Orion.")
+            
+            uploaded_csv = st.file_uploader("Choose Traffic CSV", type=['csv'], key="csv_up")
+            
+            # If a file is uploaded, convert it immediately so the user can download it
+            if uploaded_csv:
+                temp_csv_path = save_uploaded_file(uploaded_csv, suffix=".csv")
+                try:
+                    # Perform conversion
+                    ngsi_data = convert_csv_to_ngsild(temp_csv_path)
+                    json_str = json.dumps(ngsi_data, indent=2)
+                    
+                    st.success(f"✅ Successfully converted {len(ngsi_data)} rows to NGSI-LD format!")
+                    
+                    # Layout buttons side-by-side
+                    btn_col1, btn_col2 = st.columns([1, 1])
+                    
+                    with btn_col1:
+                        st.download_button(
+                            label="📥 Download JSON",
+                            data=json_str,
+                            file_name="converted_traffic_data.json",
+                            mime="application/json",
+                            use_container_width=True
+                        )
+                        
+                    with btn_col2:
+                        if st.button("🚀 Send to Orion", use_container_width=True):
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w') as tmp_json:
+                                json.dump(ngsi_data, tmp_json)
+                                temp_json_path = tmp_json.name
+                            
+                            try:
+                                result = send_data_to_broker(temp_json_path)
+                                st.success(f"Data sent to Orion! Response: {result}")
+                            except Exception as e:
+                                st.error(f"Error sending to broker: {e}")
+                            finally:
+                                os.remove(temp_json_path)
+                                
+                except Exception as e:
+                    st.error(f"Error processing CSV: {e}")
+                finally:
+                    os.remove(temp_csv_path)
 
     # === TAB 2: GET DATA (Renders for everyone) ===
     with tab_visualization:
