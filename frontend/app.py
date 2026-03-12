@@ -4,13 +4,14 @@ import os
 import tempfile
 import json
 import jwt 
+import uuid
 from streamlit_oauth import OAuth2Component
 
 from backend.getDataMongoDB import get_sensor_data
 from backend.getDataTimescaleDB import get_timescale_data
 from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap
-from backend.parserCSV import convert_csv_to_ngsild
+from backend.parserCSV import convert_csv_to_ngsild_stream
 
 # --- Keycloak Configuration ---
 AUTHORIZE_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/auth"
@@ -88,17 +89,25 @@ else:
     # DYNAMIC TAB ROUTING
     # ==========================================
     
-    # If Admin -> Show both tabs
+    # If Admin -> Show all tabs
     if is_admin:
-        tabs = st.tabs(["📤 Send Data (Ingestion)", "🔄 Convert CSV", "⚙️ Modify Data", "📊 Get Data (Visualization)"])
-        tab_ingestion, tab_conversion, tab_modifycation,tab_visualization = tabs[0], tabs[1], tabs[2], tabs[3]
-    # If Normal User -> Only create one tab
+        tabs = st.tabs([
+            "📤 Send Data (Ingestion)", 
+            "🔄 Convert CSV", 
+            "📊 Get Data (Visualization)", 
+            "🏙️ Data Models"
+        ])
+        tab_ingestion = tabs[0]
+        tab_conversion = tabs[1]
+        tab_visualization = tabs[2]
+        tab_models = tabs[3]
+    # If Normal User -> Only show Visualization and Data Models
     else:
-        tabs = st.tabs(["📊 Get Data (Visualization)"])
+        tabs = st.tabs(["📊 Get Data (Visualization)", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
-        tab_modifycation = None
         tab_visualization = tabs[0]
+        tab_models = tabs[1]
 
     # === TAB 1: SEND DATA (Only renders if tab_ingestion exists) ===
     if tab_ingestion is not None:
@@ -146,73 +155,81 @@ else:
     if tab_conversion is not None:
         with tab_conversion:
             st.header("CSV to NGSI-LD Converter")
-            st.info("Upload your raw traffic CSV, choose the attributes you want to keep, and export to NGSI-LD.")
+            st.info("Upload your raw CSV, choose the data model and attributes, and export to NGSI-LD.")
             
-            uploaded_csv = st.file_uploader("Choose Traffic CSV", type=['csv'], key="csv_up")
+            data_models = ["TrafficFlowObserved", "WeatherObserved", "Device", "Generic"]
+            selected_model = st.selectbox("Select Target NGSI-LD Data Model:", options=data_models)
+            
+            uploaded_csv = st.file_uploader("Choose CSV File", type=['csv'], key="csv_up")
             
             if uploaded_csv:
-                # Read the CSV header to get column names
                 uploaded_csv.seek(0)
                 df = pd.read_csv(uploaded_csv, nrows=0)
                 all_columns = df.columns.tolist()
-                uploaded_csv.seek(0) # Reset file pointer for save_uploaded_file
+                uploaded_csv.seek(0) 
                 
-                # Multi-select widget for attributes
                 selected_columns = st.multiselect(
                     "Select attributes to include in the NGSI-LD output:",
                     options=all_columns,
-                    default=all_columns # Select all by default
+                    default=all_columns 
                 )
                 
                 if selected_columns:
-                    # Convert the file in memory automatically whenever choices change
+                    # 1. Create temporary paths for BOTH input and output
                     temp_csv_path = save_uploaded_file(uploaded_csv, suffix=".csv")
+                    
+                    # Create a persistent temp file for the JSON output
+                    fd, temp_json_path = tempfile.mkstemp(suffix=".json")
+                    os.close(fd) # Close the file descriptor so our function can open it
+                    
                     try:
-                        ngsi_data = convert_csv_to_ngsild(temp_csv_path, selected_columns)
-                        json_str = json.dumps(ngsi_data, indent=2)
+                        with st.spinner("Converting large file... This might take a moment."):
+                            # 2. Run the streaming converter
+                            row_count = convert_csv_to_ngsild_stream(
+                                temp_csv_path, 
+                                temp_json_path, 
+                                selected_columns, 
+                                selected_model
+                            )
                         
-                        st.success(f"✅ Ready! Extracted {len(ngsi_data)} rows with {len(selected_columns)} attributes.")
+                        st.success(f"✅ Ready! Successfully streamed {row_count} rows as `{selected_model}`.")
                         
-                        # Layout buttons side-by-side
                         btn_col1, btn_col2 = st.columns([1, 1])
                         
+                        # 3. Pass the file directly to the download button
                         with btn_col1:
-                            st.download_button(
-                                label="📥 Download JSON",
-                                data=json_str,
-                                file_name="converted_traffic_data.json",
-                                mime="application/json",
-                                use_container_width=True
-                            )
+                            with open(temp_json_path, "rb") as file:
+                                st.download_button(
+                                    label="📥 Download JSON",
+                                    data=file,
+                                    file_name=f"converted_{selected_model.lower()}_data.json",
+                                    mime="application/json",
+                                    use_container_width=True
+                                )
 
-                        # Added a button to send directly to Orion (optional, can be commented out if not needed)
-                        with btn_col2:
-                            if st.button("🚀 Send to Orion", use_container_width=True):
-                                with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w') as tmp_json:
-                                    json.dump(ngsi_data, tmp_json)
-                                    temp_json_path = tmp_json.name
-                                
-                                try:
-                                    result = send_data_to_broker(temp_json_path)
-                                    st.success(f"Data sent to Orion! Response: {result}")
-                                except Exception as e:
-                                    st.error(f"Error sending to broker: {e}")
-                                finally:
-                                    os.remove(temp_json_path)
-          
+                        # with btn_col2:
+                        #     if st.button("🚀 Send to Orion", use_container_width=True):
+                        #         with st.spinner("Sending to broker..."):
+                        #             try:
+                        #                 # Your existing broker function already takes a file path!
+                        #                 result = send_data_to_broker(temp_json_path)
+                        #                 st.success(f"Data sent to Orion! Response: {result}")
+                        #             except Exception as e:
+                        #                 st.error(f"Error sending to broker: {e}")
+        
                     except Exception as e:
                         st.error(f"Error processing CSV: {e}")
                     finally:
-                        os.remove(temp_csv_path)
+                        # Clean up temporary files
+                        if os.path.exists(temp_csv_path):
+                            os.remove(temp_csv_path)
+                        # Note: We don't delete temp_json_path immediately if the user might click Download again.
+                        # Streamlit reruns the script on button clicks, so standard temp files can be tricky.
+                        # Using mkstemp keeps it alive until the app restarts or we manually clean it up.
                 else:
                     st.warning("Please select at least one attribute to convert.")
-    # === TAB 3: CHANGE DATA ===
-    if tab_modifycation is not None:
-        with tab_modifycation:
-            st.header("Data Modification")
-            st.info("Change the atributes of the different types od entities in the database. This is useful for keeping the data consistent. Working on this...")
-            
-    # === TAB 4: GET DATA (Renders for everyone) ===
+                
+    # === TAB 3: GET DATA (Renders for everyone) ===
     with tab_visualization:
         st.header("Data Visualization")
         
@@ -272,3 +289,45 @@ else:
                 
                 except Exception as e:
                     st.error(f"Could not fetch Timescale data: {e}")
+    
+    # === TAB 4: SMART CITIES DATA MODELS ===
+    with tab_models:
+        st.header("🏙️ Smart Cities Data Models (NGSI-LD)")
+        st.markdown("""
+        This application utilizes harmonized **Smart Data Models** to ensure interoperability. 
+        Below you can explore standard domain models typically used in Smart Cities.
+        """)
+
+        # Option A: Interactive Expanders with common examples
+        with st.expander("🚦 Traffic Flow Observed"):
+            st.json({
+                "id": "urn:ngsi-ld:TrafficFlowObserved:1",
+                "type": "TrafficFlowObserved",
+                "dateObserved": {"type": "Property", "value": "2023-10-25T12:00:00Z"},
+                "intensity": {"type": "Property", "value": 450},
+                "averageVehicleSpeed": {"type": "Property", "value": 52},
+                "location": {
+                    "type": "GeoProperty",
+                    "value": {
+                        "type": "Point",
+                        "coordinates": [-8.5, 41.2]
+                    }
+                }
+            })
+            st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Transportation/tree/master/TrafficFlowObserved)")
+
+        with st.expander("💡 Streetlight"):
+            st.json({
+                "id": "urn:ngsi-ld:Streetlight:1",
+                "type": "Streetlight",
+                "powerState": {"type": "Property", "value": "on"},
+                "illuminanceLevel": {"type": "Property", "value": 0.8},
+                "location": {
+                    "type": "GeoProperty",
+                    "value": {
+                        "type": "Point",
+                        "coordinates": [-8.6, 41.1]
+                    }
+                }
+            })
+            st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Streetlighting)")
