@@ -5,6 +5,9 @@ import tempfile
 import json
 import jwt 
 import uuid
+import io
+import zipfile
+import tempfile
 from streamlit_oauth import OAuth2Component
 
 from backend.getDataMongoDB import get_sensor_data
@@ -12,6 +15,7 @@ from backend.getDataTimescaleDB import get_timescale_data
 from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap
 from backend.parserCSV import convert_csv_to_ngsild_stream
+from backend.parserGTFS import process_gtfs_zip
 
 # --- Keycloak Configuration ---
 AUTHORIZE_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/auth"
@@ -94,18 +98,21 @@ else:
         tabs = st.tabs([
             "📤 Send Data (Ingestion)", 
             "🔄 Convert CSV", 
+            "🚇 Convert GTFS",  # <--- NEW TAB HERE
             "📊 Get Data (Visualization)", 
             "🏙️ Data Models"
         ])
         tab_ingestion = tabs[0]
         tab_conversion = tabs[1]
-        tab_visualization = tabs[2]
-        tab_models = tabs[3]
+        tab_gtfs = tabs[2]      # <--- ASSIGN NEW TAB
+        tab_visualization = tabs[3]
+        tab_models = tabs[4]
     # If Normal User -> Only show Visualization and Data Models
     else:
         tabs = st.tabs(["📊 Get Data (Visualization)", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
+        tab_gtfs = None         # <--- NONE FOR NORMAL USERS
         tab_visualization = tabs[0]
         tab_models = tabs[1]
 
@@ -175,61 +182,116 @@ else:
                 )
                 
                 if selected_columns:
-                    # 1. Create temporary paths for BOTH input and output
+                    # 1. Create a temp path for the input CSV
                     temp_csv_path = save_uploaded_file(uploaded_csv, suffix=".csv")
                     
-                    # Create a persistent temp file for the JSON output
-                    fd, temp_json_path = tempfile.mkstemp(suffix=".json")
-                    os.close(fd) # Close the file descriptor so our function can open it
+                    # Create a temporary directory to hold all the JSON chunks
+                    temp_dir = tempfile.mkdtemp()
                     
                     try:
-                        with st.spinner("Converting large file... This might take a moment."):
-                            # 2. Run the streaming converter
-                            row_count = convert_csv_to_ngsild_stream(
-                                temp_csv_path, 
-                                temp_json_path, 
-                                selected_columns, 
-                                selected_model
+                        with st.spinner("Converting large file and splitting into chunks... This might take a moment."):
+                            # 2. Run the streaming converter with a 50,000 row limit per file
+                            # (Adjust chunk_size if you want larger/smaller files)
+                            row_count, json_files = convert_csv_to_ngsild_stream(
+                                csv_file_path=temp_csv_path, 
+                                output_dir=temp_dir, 
+                                file_prefix=selected_model.lower(),
+                                selected_columns=selected_columns, 
+                                data_model=selected_model,
+                                chunk_size=50000 
                             )
                         
-                        st.success(f"✅ Ready! Successfully streamed {row_count} rows as `{selected_model}`.")
+                        st.success(f"✅ Ready! Successfully streamed {row_count} rows into {len(json_files)} files as `{selected_model}`.")
+                        
+                        # 3. Create a ZIP file in memory
+                        zip_buffer = io.BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                            for json_file in json_files:
+                                # Add each file to the zip without the full temporary path structure
+                                zip_file.write(json_file, arcname=os.path.basename(json_file))
+                        
+                        # Reset the buffer's position to the beginning so it can be read by st.download_button
+                        zip_buffer.seek(0)
                         
                         btn_col1, btn_col2 = st.columns([1, 1])
                         
-                        # 3. Pass the file directly to the download button
+                        # 4. Pass the ZIP buffer directly to the download button
                         with btn_col1:
-                            with open(temp_json_path, "rb") as file:
-                                st.download_button(
-                                    label="📥 Download JSON",
-                                    data=file,
-                                    file_name=f"converted_{selected_model.lower()}_data.json",
-                                    mime="application/json",
-                                    use_container_width=True
-                                )
+                            st.download_button(
+                                label="📥 Download ZIP Archive",
+                                data=zip_buffer,
+                                file_name=f"converted_{selected_model.lower()}_data.zip",
+                                mime="application/zip",
+                                use_container_width=True
+                            )
 
-                        # with btn_col2:
-                        #     if st.button("🚀 Send to Orion", use_container_width=True):
-                        #         with st.spinner("Sending to broker..."):
-                        #             try:
-                        #                 # Your existing broker function already takes a file path!
-                        #                 result = send_data_to_broker(temp_json_path)
-                        #                 st.success(f"Data sent to Orion! Response: {result}")
-                        #             except Exception as e:
-                        #                 st.error(f"Error sending to broker: {e}")
-        
                     except Exception as e:
                         st.error(f"Error processing CSV: {e}")
                     finally:
-                        # Clean up temporary files
+                        # Clean up the temporary CSV input file
                         if os.path.exists(temp_csv_path):
                             os.remove(temp_csv_path)
-                        # Note: We don't delete temp_json_path immediately if the user might click Download again.
-                        # Streamlit reruns the script on button clicks, so standard temp files can be tricky.
-                        # Using mkstemp keeps it alive until the app restarts or we manually clean it up.
+                            
+                        # Clean up the temporary JSON chunks 
+                        # (The ZIP exists in memory, so we can delete the files from disk immediately)
+                        for f in os.listdir(temp_dir):
+                            os.remove(os.path.join(temp_dir, f))
+                        os.rmdir(temp_dir)
+                        
                 else:
                     st.warning("Please select at least one attribute to convert.")
-                
-    # === TAB 3: GET DATA (Renders for everyone) ===
+
+    # === TAB 3: CONVERT GTFS ===
+    if tab_gtfs is not None:
+        with tab_gtfs:
+            st.header("🚇 Dataset to NGSI-LD Converter (ZIP)")
+            st.info("Upload your archive (ZIP), assign the appropriate Smart Data Model Contexts, and download the resulting NGSI-LD JSON files.")
+            
+            # Allow the user to inject multiple Smart Data Models Contexts
+            available_domains = [
+                "UrbanMobility", 
+                "Transportation", 
+                "Environment", 
+                "Weather", 
+                "PointOfInterest", 
+                "Parking",
+                "Streetlighting"
+            ]
+            
+            selected_domains = st.multiselect(
+                "Select Data Model Contexts to apply:",
+                options=available_domains,
+                default=["UrbanMobility"] # Default for GTFS, but can be removed/changed
+            )
+
+            uploaded_gtfs_zip = st.file_uploader("Choose ZIP Archive", type=['zip'], key="gtfs_zip_up")
+            
+            if uploaded_gtfs_zip:
+                if not selected_domains:
+                    st.warning("⚠️ Please select at least one Data Model Context.")
+                else:
+                    if st.button("Convert to NGSI-LD"):
+                        try:
+                            with st.spinner("Extracting and processing files..."):
+                                # Pass BOTH the file and the selected domains
+                                converted_zip_buffer = process_gtfs_zip(
+                                    uploaded_gtfs_zip, 
+                                    selected_domains
+                                )
+                                
+                            st.success("✅ Conversion successful! Your NGSI-LD entities are ready.")
+                            
+                            st.download_button(
+                                label="📥 Download Converted Data (ZIP)",
+                                data=converted_zip_buffer,
+                                file_name="ngsi_ld_converted_data.zip",
+                                mime="application/zip",
+                                use_container_width=True
+                            )
+                        except Exception as e:
+                            st.error(f"An error occurred during conversion: {e}")
+
+    # === TAB 4: GET DATA (Renders for everyone) ===
     with tab_visualization:
         st.header("Data Visualization")
         
@@ -290,7 +352,7 @@ else:
                 except Exception as e:
                     st.error(f"Could not fetch Timescale data: {e}")
     
-    # === TAB 4: SMART CITIES DATA MODELS ===
+    # === TAB 5: SMART CITIES DATA MODELS ===
     with tab_models:
         st.header("🏙️ Smart Cities Data Models (NGSI-LD)")
         st.markdown("""

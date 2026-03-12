@@ -1,3 +1,4 @@
+import os
 import csv
 import json
 from datetime import datetime
@@ -21,21 +22,27 @@ def convert_to_number(val):
     except ValueError:
         return val
 
-def convert_csv_to_ngsild_stream(csv_file_path, output_json_path, selected_columns, data_model):
-    """Reads CSV and streams NGSI-LD entities directly to a JSON file."""
+def convert_csv_to_ngsild_stream(csv_file_path, output_dir, file_prefix, selected_columns, data_model, chunk_size=50000):
+    """Reads CSV and streams NGSI-LD entities to multiple chunked JSON files."""
     
-    with open(csv_file_path, mode='r', encoding='utf-8') as infile, \
-         open(output_json_path, mode='w', encoding='utf-8') as outfile:
-        
+    generated_files = []
+    
+    with open(csv_file_path, mode='r', encoding='utf-8') as infile:
         reader = csv.DictReader(infile)
         
-        # Start the JSON array
-        outfile.write("[\n")
-        
-        is_first = True
+        chunk_index = 1
         count = 0
+        row_count_in_chunk = 0
+        outfile = None
         
         for index, row in enumerate(reader):
+            # If we are starting a new chunk, open a new file
+            if row_count_in_chunk == 0:
+                current_file_path = os.path.join(output_dir, f"{file_prefix}_part{chunk_index}.json")
+                generated_files.append(current_file_path)
+                outfile = open(current_file_path, mode='w', encoding='utf-8')
+                outfile.write("[\n")
+            
             # Dispatch to the correct mapping function
             if data_model == "TrafficFlowObserved":
                 entity = map_traffic_flow_observed(row, selected_columns, index)
@@ -44,19 +51,29 @@ def convert_csv_to_ngsild_stream(csv_file_path, output_json_path, selected_colum
             else:
                 entity = map_generic_entity(row, selected_columns, data_model, index)
             
-            # Add a comma before every entity EXCEPT the first one
-            if not is_first:
+            # Add a comma before every entity EXCEPT the first one in the chunk
+            if row_count_in_chunk > 0:
                 outfile.write(",\n")
-            is_first = False
             
             # Dump the single entity directly into the file
             json.dump(entity, outfile, indent=2)
-            count += 1
             
-        # Close the JSON array
-        outfile.write("\n]")
-        
-    return count 
+            count += 1
+            row_count_in_chunk += 1
+            
+            # If we reached the chunk size limit, close the file and reset
+            if row_count_in_chunk >= chunk_size:
+                outfile.write("\n]")
+                outfile.close()
+                chunk_index += 1
+                row_count_in_chunk = 0
+                
+        # Close the very last file if it wasn't closed by hitting the exact chunk limit
+        if outfile and not outfile.closed:
+            outfile.write("\n]")
+            outfile.close()
+            
+    return count, generated_files
 
 
 def map_traffic_flow_observed(row, selected_columns, index):
