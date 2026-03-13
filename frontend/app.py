@@ -13,7 +13,7 @@ from streamlit_oauth import OAuth2Component
 from backend.getDataMongoDB import get_sensor_data
 from backend.getDataTimescaleDB import get_timescale_data
 from backend.sendDataMongoDB import send_data_to_broker
-from backend.sendDataTimescaleDB import send_notification_to_quantumleap
+from backend.sendDataTimescaleDB import send_notification_to_quantumleap_in_batches
 from backend.parserCSV import convert_csv_to_ngsild_stream
 from backend.parserGTFS import process_gtfs_zip
 
@@ -149,7 +149,9 @@ else:
                     if uploaded_ql:
                         temp_path = save_uploaded_file(uploaded_ql)
                         try:
-                            result = send_notification_to_quantumleap(temp_path)
+                            with st.spinner('Sending data in batches to QuantumLeap... Please wait.'):
+                                result = send_notification_to_quantumleap_in_batches(temp_path)
+
                             st.success(f"Subscription Created! Response: {result}")
                         except Exception as e:
                             st.error(f"Error: {e}")
