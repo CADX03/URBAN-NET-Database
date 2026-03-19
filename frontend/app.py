@@ -249,7 +249,7 @@ else:
             st.header("🚇 Dataset to NGSI-LD Converter (ZIP)")
             st.info("Upload your archive (ZIP), assign the appropriate Smart Data Model Contexts, and download the resulting NGSI-LD JSON files.")
             
-            # Allow the user to inject multiple Smart Data Models Contexts
+            # Allow the user to inject a Smart Data Model Context
             available_domains = [
                 "UrbanMobility", 
                 "Transportation", 
@@ -260,10 +260,10 @@ else:
                 "Streetlighting"
             ]
             
-            selected_domains = st.multiselect(
-                "Select Data Model Contexts to apply:",
+            selected_domain = st.selectbox(
+                "Select a Data Model Context to apply:",
                 options=available_domains,
-                default=["UrbanMobility"] # Default for GTFS, but can be removed/changed
+                index=0 # Sets "UrbanMobility" as default since it's at index 0
             )
 
             uploaded_gtfs_zip = st.file_uploader("Choose ZIP Archive", type=['zip'], key="gtfs_zip_up")
