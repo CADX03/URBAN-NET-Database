@@ -166,7 +166,7 @@ else:
             st.header("CSV to NGSI-LD Converter")
             st.info("Upload your raw CSV, choose the data model and attributes, and export to NGSI-LD.")
             
-            data_models = ["TrafficFlowObserved", "WeatherObserved", "Device", "Generic"]
+            data_models = ["TrafficFlowObserved", "WeatherObserved", "Generic"]
             selected_model = st.selectbox("Select Target NGSI-LD Data Model:", options=data_models)
             
             uploaded_csv = st.file_uploader("Choose CSV File", type=['csv'], key="csv_up")

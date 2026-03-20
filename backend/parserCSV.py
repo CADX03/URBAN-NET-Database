@@ -112,7 +112,6 @@ def map_traffic_flow_observed(row, selected_columns, index):
         elif col == "OCCUPANCY":
             entity["occupancy"] = {"type": "Property", "value": convert_to_number(val)}
         elif col == "AXLE_CLASS_VOLUMES":
-            # Assuming parse_axle_volumes is defined elsewhere in your code
             entity["axleClassVolumes"] = {"type": "Property", "value": parse_axle_volumes(val)}
         elif col == "AGGREGATE_BY_LANE_BUNDLEID":
             pass # Handled in the entity ID
@@ -121,7 +120,9 @@ def map_traffic_flow_observed(row, selected_columns, index):
             
     return entity
 
-
+# The mapping function for WeatherObserved is similar in structure but tailored to its specific attributes and context. 
+# It also includes a fallback mechanism for the entity ID, checking for both 'id' and 'ID' columns before defaulting to a generated ID based on the row index.
+# Imcomplete!
 def map_weather_observed(row, selected_columns, index):
     """Maps CSV rows specifically to the WeatherObserved data model."""
     # Fallback to 'id', 'ID', or the row index

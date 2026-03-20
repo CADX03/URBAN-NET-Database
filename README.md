@@ -140,6 +140,6 @@ SELECT * FROM etroom;
 
 
 To do:
-- Melhorar Generic e parser CSV;
-- Visualização;
-- Meter tipos de dados mais comuns (GeoJSON);
+- [x] Melhorar Generic e parser CSV;
+- [ ] Visualização;
+- [ ] Meter tipos de dados mais comuns (GeoJSON);
