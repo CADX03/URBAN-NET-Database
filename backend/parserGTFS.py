@@ -107,7 +107,7 @@ def convert_transfers(df, context_list):
 def process_gtfs_zip(uploaded_zip_bytes, selected_domains):
     """
     Takes a ZIP file and a list of Smart Data Model domains.
-    Generates the dynamic context and converts the data.
+    Generates the dynamic context and converts the data into chunked files.
     """
     # 1. Build the dynamic context based on user selection
     context_list = [
@@ -118,6 +118,9 @@ def process_gtfs_zip(uploaded_zip_bytes, selected_domains):
     context_list.append("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
 
     out_zip_buffer = io.BytesIO()
+    
+    # Target ~80MB per JSON file. This is a balance between file size and number of files, but can be adjusted as needed.
+    CHUNK_SIZE = 150000 
     
     with tempfile.TemporaryDirectory() as tmp_dir:
         with zipfile.ZipFile(uploaded_zip_bytes, "r") as z:
@@ -143,11 +146,28 @@ def process_gtfs_zip(uploaded_zip_bytes, selected_domains):
         with zipfile.ZipFile(out_zip_buffer, "w", zipfile.ZIP_DEFLATED) as out_zip:
             for txt_file, (json_filename, convert_func) in file_map.items():
                 file_path = os.path.join(work_dir, txt_file)
+                
                 if os.path.exists(file_path):
-                    df = pd.read_csv(file_path)
-                    # Pass the dynamic context list to the conversion function
-                    entities = convert_func(df, context_list)
-                    out_zip.writestr(json_filename, json.dumps(entities, indent=2, ensure_ascii=False))
+                    base_name, ext = os.path.splitext(json_filename)
+                    
+                    # Read the CSV in chunks. This saves memory and allows easy file splitting.
+                    # low_memory=False prevents mixed-type inference warnings on large files.
+                    chunk_iter = pd.read_csv(file_path, chunksize=CHUNK_SIZE, low_memory=False)
+                    
+                    for i, df_chunk in enumerate(chunk_iter):
+                        # Convert only the current chunk of data
+                        entities = convert_func(df_chunk, context_list)
+                        
+                        # Determine filename: If it all fits in one chunk, use the original name.
+                        # Otherwise, append _part1, _part2, etc.
+                        if i == 0 and len(df_chunk) < CHUNK_SIZE:
+                            out_filename = json_filename
+                        else:
+                            out_filename = f"{base_name}_part{i+1}{ext}"
+                            
+                        # Dump to string and write to the zip
+                        json_str = json.dumps(entities, indent=2, ensure_ascii=False)
+                        out_zip.writestr(out_filename, json_str)
                     
     out_zip_buffer.seek(0)
     return out_zip_buffer

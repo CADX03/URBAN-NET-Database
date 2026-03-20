@@ -98,13 +98,13 @@ else:
         tabs = st.tabs([
             "📤 Send Data (Ingestion)", 
             "🔄 Convert CSV", 
-            "🚇 Convert GTFS",  # <--- NEW TAB HERE
+            "🚇 Convert GTFS",
             "📊 Get Data (Visualization)", 
             "🏙️ Data Models"
         ])
         tab_ingestion = tabs[0]
         tab_conversion = tabs[1]
-        tab_gtfs = tabs[2]      # <--- ASSIGN NEW TAB
+        tab_gtfs = tabs[2]
         tab_visualization = tabs[3]
         tab_models = tabs[4]
     # If Normal User -> Only show Visualization and Data Models
@@ -112,7 +112,7 @@ else:
         tabs = st.tabs(["📊 Get Data (Visualization)", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
-        tab_gtfs = None         # <--- NONE FOR NORMAL USERS
+        tab_gtfs = None
         tab_visualization = tabs[0]
         tab_models = tabs[1]
 
@@ -218,8 +218,7 @@ else:
                         btn_col1, btn_col2 = st.columns([1, 1])
                         
                         # 4. Pass the ZIP buffer directly to the download button
-                        with btn_col1:
-                            st.download_button(
+                        st.download_button(
                                 label="📥 Download ZIP Archive",
                                 data=zip_buffer,
                                 file_name=f"converted_{selected_model.lower()}_data.zip",
@@ -269,7 +268,7 @@ else:
             uploaded_gtfs_zip = st.file_uploader("Choose ZIP Archive", type=['zip'], key="gtfs_zip_up")
             
             if uploaded_gtfs_zip:
-                if not selected_domains:
+                if not available_domains:
                     st.warning("⚠️ Please select at least one Data Model Context.")
                 else:
                     if st.button("Convert to NGSI-LD"):
@@ -278,7 +277,7 @@ else:
                                 # Pass BOTH the file and the selected domains
                                 converted_zip_buffer = process_gtfs_zip(
                                     uploaded_gtfs_zip, 
-                                    selected_domains
+                                    selected_domain
                                 )
                                 
                             st.success("✅ Conversion successful! Your NGSI-LD entities are ready.")
@@ -361,6 +360,7 @@ else:
         This application utilizes harmonized **Smart Data Models** to ensure interoperability. 
         Below you can explore standard domain models typically used in Smart Cities.
         """)
+        st.markdown("[View Full Specification for the Smart Cities Data Models 🔗](https://smartdatamodels.org/index.php/smart-cities-domain-at-smart-data-models/)")
 
         # Option A: Interactive Expanders with common examples
         with st.expander("🚦 Traffic Flow Observed"):
@@ -380,18 +380,24 @@ else:
             })
             st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Transportation/tree/master/TrafficFlowObserved)")
 
-        with st.expander("💡 Streetlight"):
+        with st.expander("🚌 Public Transport Stop GTFS (Urban Mobility)"):
             st.json({
-                "id": "urn:ngsi-ld:Streetlight:1",
-                "type": "Streetlight",
-                "powerState": {"type": "Property", "value": "on"},
-                "illuminanceLevel": {"type": "Property", "value": 0.8},
-                "location": {
-                    "type": "GeoProperty",
-                    "value": {
-                        "type": "Point",
-                        "coordinates": [-8.6, 41.1]
-                    }
-                }
-            })
-            st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Streetlighting)")
+                    "id": "urn:ngsi-ld:GtfsStop:Malaga_101",
+                    "type": "GtfsStop",
+                    "code": "101",
+                    "location": {
+                        "coordinates": [
+                        -4.424393,
+                        36.716872
+                        ],
+                        "type": "Point"
+                    },
+                    "name": "Alameda Principal Sur",
+                    "operatedBy": [
+                        "urn:ngsi-ld:GtfsAgency:Malaga_EMT"
+                    ],
+                    "@context": [
+                        "https://raw.githubusercontent.com/smart-data-models/dataModel.UrbanMobility/master/context.jsonld"
+                    ]
+                })
+            st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.UrbanMobility/tree/master/GtfsStop)")

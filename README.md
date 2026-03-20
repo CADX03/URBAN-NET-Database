@@ -137,3 +137,9 @@ SELECT * FROM etroom;
   - Assigned that admin role to your test user.
 
   - Ensured that Client Scopes -> roles -> Mappers -> realm roles is configured to add the realm roles to the Access Token. (This is usually configured this way by default in modern Keycloak versions).
+
+
+To do:
+- Melhorar Generic e parser CSV;
+- Visualização;
+- Meter tipos de dados mais comuns (GeoJSON);
