@@ -139,6 +139,31 @@ SELECT * FROM etroom;
   - Ensured that Client Scopes -> roles -> Mappers -> realm roles is configured to add the realm roles to the Access Token. (This is usually configured this way by default in modern Keycloak versions).
 
 
+## Grafana (Visualization)
+
+Once the container is running, open your browser and go to http://localhost:3000. 
+
+1. Log in with admin / admin. 
+
+2. Now, you need to link Grafana to your database. In the left-hand menu, go to Connections -> Data sources.
+
+3. Click Add data source and search for PostgreSQL.
+
+4. Fill in the connection details using the internal Docker network names from your compose file:
+  - Host: timescale:5432
+
+  - Database: postgres 
+
+  - User: postgres
+
+  - Password: password
+
+  - TLS/SSL Mode: disable
+
+5. Under the PostgreSQL details section, make sure to enable the TimescaleDB toggle.
+
+6. Click Save & test. You should get a green notification saying the database connection is okay.
+
 To do:
 - [x] Melhorar Generic e parser CSV;
 - [ ] Visualização;
