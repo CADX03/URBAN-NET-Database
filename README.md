@@ -186,3 +186,5 @@ To do:
 - [x] Melhorar Generic e parser CSV;
 - [x] Visualização;
 - [ ] Meter tipos de dados mais comuns (GeoJSON);
+- [ ] Criar contas;
+- [ ] Segurança;

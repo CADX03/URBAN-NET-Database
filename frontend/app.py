@@ -176,14 +176,30 @@ else:
                 df = pd.read_csv(uploaded_csv, nrows=0)
                 all_columns = df.columns.tolist()
                 uploaded_csv.seek(0) 
-                
-                selected_columns = st.multiselect(
-                    "Select attributes to include in the NGSI-LD output:",
-                    options=all_columns,
-                    default=all_columns 
+
+                # 1. Define strictly required columns
+                mandatory_columns = ["AGGREGATE_BY_LANE_BUNDLEID" ,"AGG_PERIOD_START", 
+                                     "EQUIPMENTID", "LANE_BUNDLE_DIRECTION", "TOTAL_VOLUME", 
+                                     "AVG_SPEED_ARITHMETIC", "OCCUPANCY"]
+
+                # 2. Remove mandatory columns from the choices given to the user
+                optional_columns = [col for col in all_columns if col not in mandatory_columns]
+
+                st.info(f"The following columns are required and automatically included: {', '.join(mandatory_columns)}")
+
+                user_selected_columns = st.multiselect(
+                    "Select additional attributes to include in the NGSI-LD output:",
+                    options=optional_columns,
+                    default=optional_columns # Pre-selects the rest, or you can leave it empty: default=[]
                 )
+
+                # 3. Combine them in the background
+                # (Only add mandatory columns if they actually existed in the original CSV)
+                valid_mandatory_cols = [col for col in mandatory_columns if col in all_columns]
+
+                final_selected_columns = valid_mandatory_cols + user_selected_columns
                 
-                if selected_columns:
+                if final_selected_columns:
                     # 1. Create a temp path for the input CSV
                     temp_csv_path = save_uploaded_file(uploaded_csv, suffix=".csv")
                     
@@ -198,7 +214,7 @@ else:
                                 csv_file_path=temp_csv_path, 
                                 output_dir=temp_dir, 
                                 file_prefix=selected_model.lower(),
-                                selected_columns=selected_columns, 
+                                selected_columns=final_selected_columns, 
                                 data_model=selected_model,
                                 chunk_size=50000 
                             )
@@ -252,11 +268,8 @@ else:
             available_domains = [
                 "UrbanMobility", 
                 "Transportation", 
-                "Environment", 
-                "Weather", 
-                "PointOfInterest", 
-                "Parking",
-                "Streetlighting"
+                "Streetlighting",
+                "Generic"
             ]
             
             selected_domain = st.selectbox(

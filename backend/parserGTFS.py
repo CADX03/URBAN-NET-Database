@@ -113,9 +113,12 @@ def process_gtfs_zip(uploaded_zip_bytes, selected_domain):
     Generates the dynamic context and converts the data into chunked files.
     """
     # 1. Build the dynamic context based on user selection
-    context_list = [
-        f"https://raw.githubusercontent.com/smart-data-models/dataModel.{selected_domain}/master/context.jsonld"
-    ]
+    if (selected_domain != "Generic"):
+        context_list = [
+            f"https://raw.githubusercontent.com/smart-data-models/dataModel.{selected_domain}/master/context.jsonld"
+        ]
+    else:
+        context_list = []
     # Always include the core NGSI-LD context at the end
     context_list.append("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
 
