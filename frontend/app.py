@@ -437,21 +437,91 @@ else:
         """)
         st.markdown("[View Full Specification for the Smart Cities Data Models 🔗](https://smartdatamodels.org/index.php/smart-cities-domain-at-smart-data-models/)")
 
-        # Option A: Interactive Expanders with common examples
         with st.expander("🚦 Traffic Flow Observed"):
             st.json({
-                "id": "urn:ngsi-ld:TrafficFlowObserved:1",
+                "id": "urn:ngsi-ld:TrafficFlowObserved:TrafficFlowObserved-Valladolid-osm-60821110",
                 "type": "TrafficFlowObserved",
-                "dateObserved": {"type": "Property", "value": "2023-10-25T12:00:00Z"},
-                "intensity": {"type": "Property", "value": 450},
-                "averageVehicleSpeed": {"type": "Property", "value": 52},
+                "address": {
+                    "type": "Property",
+                    "value": {
+                    "addressLocality": "Valladolid",
+                    "addressCountry": "ES",
+                    "streetAddress": "Avenida de Salamanca"
+                    }
+                },
+                "averageHeadwayTime": {
+                    "type": "Property",
+                    "value": 0.5
+                },
+                "averageVehicleLength": {
+                    "type": "Property",
+                    "value": 9.87
+                },
+                "averageVehicleSpeed": {
+                    "type": "Property",
+                    "value": 52.6
+                },
+                "dateObserved": {
+                    "type": "Property",
+                    "value": {
+                    "@type": "DateTime",
+                    "@value": "2016-12-07T11:10:00"
+                    }
+                },
+                "dateObservedFrom": {
+                    "type": "Property",
+                    "value": {
+                    "@type": "DateTime",
+                    "@value": "2016-12-07T11:10:00Z"
+                    }
+                },
+                "dateObservedTo": {
+                    "type": "Property",
+                    "value": {
+                    "@type": "DateTime",
+                    "@value": "2016-12-07T11:15:00Z"
+                    }
+                },
+                "intensity": {
+                    "type": "Property",
+                    "value": 197
+                },
+                "laneDirection": {
+                    "type": "Property",
+                    "value": "forward"
+                },
+                "laneId": {
+                    "type": "Property",
+                    "value": 1
+                },
                 "location": {
                     "type": "GeoProperty",
                     "value": {
-                        "type": "Point",
-                        "coordinates": [-8.5, 41.2]
+                    "type": "LineString",
+                    "coordinates": [
+                        [
+                        -4.73735395519672,
+                        41.6538181849672
+                        ],
+                        [
+                        -4.73414858659993,
+                        41.6600594193478
+                        ],
+                        [
+                        -4.73447575302641,
+                        41.659585195093
+                        ]
+                    ]
                     }
-                }
+                },
+                "occupancy": {
+                    "type": "Property",
+                    "value": 0.76
+                },
+                "@context": [
+                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+                    "https://raw.githubusercontent.com/smart-data-models/dataModel.Transportation/master/context.jsonld"
+                ]
             })
             st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Transportation/tree/master/TrafficFlowObserved)")
 
@@ -476,3 +546,33 @@ else:
                     ]
                 })
             st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.UrbanMobility/tree/master/GtfsStop)")
+    
+        with st.expander("🚗 Off-Street Parking (Parking)"):
+            st.json({
+                "id": "urn:ngsi-ld:OffStreetParking:Porto:ParkingLot123",
+                "type": "OffStreetParking",
+                "name": {
+                    "type": "Property",
+                    "value": "Parking Lot 123"
+                },
+                "location": {
+                    "type": "GeoProperty",
+                    "value": {
+                        "type": "Point",
+                        "coordinates": [-8.611, 41.149]
+                    }
+                },
+                "totalCapacity": {
+                    "type": "Property",
+                    "value": 100
+                },
+                "availableSpaces": {
+                    "type": "Property",
+                    "value": 20
+                },
+                "@context": [
+                    "https://raw.githubusercontent.com/smart-data-models/dataModel.Parking/master/context.jsonld",
+                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+                ]
+            })
+            st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Parking/tree/master/OffStreetParking)")
