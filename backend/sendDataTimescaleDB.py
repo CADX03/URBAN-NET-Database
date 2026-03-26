@@ -58,4 +58,4 @@ if __name__ == "__main__":
     # Point the function to your JSON file
     #send_notification_to_quantumleap_in_batches('./../dataGTFS/ngsi_ld_converted_data/routes.json', batch_size=500)
     #send_notification_to_quantumleap_in_batches('./../dataGTFS/ngsi_ld_converted_data/calendar.json', batch_size=500)
-    send_notification_to_quantumleap_in_batches('./../dataGTFS/test.json', batch_size=500)
+    send_notification_to_quantumleap_in_batches('./../output/converted_geojson.json', batch_size=500)

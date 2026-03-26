@@ -16,6 +16,7 @@ from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap_in_batches
 from backend.parserCSV import convert_csv_to_ngsild_stream
 from backend.parserGTFS import process_gtfs_zip
+from backend.parserGeoJSON import process_geojson_in_memory
 
 # --- Keycloak Configuration ---
 AUTHORIZE_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/auth"
@@ -99,20 +100,23 @@ else:
             "📤 Send Data (Ingestion)", 
             "🔄 Convert CSV", 
             "🚇 Convert GTFS",
+            "📍 Convert GeoJSON",
             "📊 Get Data (Visualization)", 
             "🏙️ Data Models"
         ])
         tab_ingestion = tabs[0]
         tab_conversion = tabs[1]
         tab_gtfs = tabs[2]
-        tab_visualization = tabs[3]
-        tab_models = tabs[4]
+        tab_GeoJSON = tabs[3]
+        tab_visualization = tabs[4]
+        tab_models = tabs[5]
     # If Normal User -> Only show Visualization and Data Models
     else:
         tabs = st.tabs(["📊 Get Data (Visualization)", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
         tab_gtfs = None
+        tab_GeoJSON = None
         tab_visualization = tabs[0]
         tab_models = tabs[1]
 
@@ -305,7 +309,65 @@ else:
                         except Exception as e:
                             st.error(f"An error occurred during conversion: {e}")
 
-    # === TAB 4: GET DATA (Renders for everyone) ===
+    # === TAB 4: CONVERT GeoJSON ===
+    if tab_GeoJSON is not None:
+        with tab_GeoJSON:
+            st.header("📍 GeoJSON to NGSI-LD Converter")
+            st.info("Upload a GeoJSON file, select the appropriate mapping, and convert it to NGSI-LD format. " \
+            "Make sure to provide a valid Smart Data Model Context URL for proper semantic annotation. Look at the Smart Cities Data Models tab for examples of context URLs you can use.")
+
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Entity Type Input
+                entity_type_input = st.text_input(
+                    "NGSI-LD Entity Type:", 
+                    value="OffStreetParking"
+                )
+            
+            with col2:
+                # Smart Data Model Context URL Input
+                context_url_input = st.text_input(
+                    "Smart Data Model Context URL:",
+                    value="https://raw.githubusercontent.com/smart-data-models/dataModel.Parking/master/context.jsonld"
+                )
+
+            # File uploader specific to GeoJSON/JSON
+            uploaded_geojson = st.file_uploader("Choose GeoJSON File", type=['geojson', 'json'], key="geojson_up")
+
+            if uploaded_geojson and entity_type_input and context_url_input:
+                if st.button("Convert to NGSI-LD", key="btn_convert_geojson"):
+                    try:
+                        with st.spinner("Processing GeoJSON..."):
+                            # 1. Read the uploaded file into a Python dictionary
+                            geojson_data = json.load(uploaded_geojson)
+                            
+                            # 2. Process the data using our helper function (passing the new context URL)
+                            ngsild_data = process_geojson_in_memory(
+                                geojson_data, 
+                                entity_type_input, 
+                                context_url_input
+                            )
+                            
+                            # 3. Convert the Python dictionary back to a formatted JSON string
+                            converted_json_str = json.dumps(ngsild_data, indent=2, ensure_ascii=False)
+                            
+                        st.success("✅ Conversion successful! Your NGSI-LD entities are ready.")
+                        
+                        # 4. Provide the download button
+                        st.download_button(
+                            label="📥 Download Converted Data (JSON)",
+                            data=converted_json_str,
+                            file_name=f"{entity_type_input}_ngsild.json",
+                            mime="application/json",
+                            use_container_width=True
+                        )
+                    except json.JSONDecodeError:
+                        st.error("Error: The uploaded file is not a valid JSON document.")
+                    except Exception as e:
+                        st.error(f"An error occurred during conversion: {e}")
+            
+    # === TAB 5: GET DATA (Renders for everyone) ===
     with tab_visualization:
         st.header("Data Visualization")
         
@@ -366,7 +428,7 @@ else:
                 except Exception as e:
                     st.error(f"Could not fetch Timescale data: {e}")
     
-    # === TAB 5: SMART CITIES DATA MODELS ===
+    # === TAB 6: SMART CITIES DATA MODELS ===
     with tab_models:
         st.header("🏙️ Smart Cities Data Models (NGSI-LD)")
         st.markdown("""
