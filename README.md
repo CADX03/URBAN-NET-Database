@@ -4,7 +4,7 @@
 Start the project
 
 ```bash
-docker-compose up --build
+docker-compose up --build -d
 ```
 
 LINK: http://localhost:8501
@@ -164,7 +164,25 @@ Once the container is running, open your browser and go to http://localhost:3000
 
 6. Click Save & test. You should get a green notification saying the database connection is okay.
 
+To read the geoJson type data, this examples will help:
+
+```sql
+  -- As human-readable text (WKT format)
+  SELECT ST_AsText(location) FROM etgtfsstop;
+  -- Result: POINT(-8.57522842559986 41.2098796212627)
+
+  -- As GeoJSON
+  SELECT ST_AsGeoJSON(location) FROM etgtfsstop;
+  -- Result: {"type":"Point","coordinates":[-8.575228425599860,41.209879621262700]}
+
+  -- As latitude/longitude separately
+  SELECT 
+    ST_X(location) AS longitude,
+    ST_Y(location) AS latitude
+  FROM etgtfsstop;
+```
+
 To do:
 - [x] Melhorar Generic e parser CSV;
-- [ ] Visualização;
+- [x] Visualização;
 - [ ] Meter tipos de dados mais comuns (GeoJSON);

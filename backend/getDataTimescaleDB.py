@@ -8,6 +8,7 @@ def get_timescale_data(entity_id=None, entity_type=None):
     """
     # Base URL for the QuantumLeap entities endpoint
     base_url = 'http://quantumleap:8668/v2/entities'
+    #base_url = 'http://localhost:8668/v2/entities'
     
     query_params = {}
 
@@ -38,13 +39,13 @@ def get_timescale_data(entity_id=None, entity_type=None):
 # --- Examples of how to use the function ---
 if __name__ == "__main__":
     
-    print("--- Fetching history for a specific ID ('Room2') ---")
-    specific_id = "urn:ngsi-ld:WeatherObserved:porto:weather:ubiwhere:5ad615bb3da2520542bc87fb"
+    print("--- Fetching history for a specific ID ---")
+    specific_id = "urn:ngsi-ld:GtfsCalendarRule:Porto:UTEIS"
     specific_data = get_timescale_data(entity_id=specific_id)
     print(specific_data)
     
     print("\n--- Fetching ALL historical data ---")
     # Calling without an ID gets all data. 
     # Optional: You can pass entity_type="Room" to filter the results.
-    all_data = get_timescale_data() 
+    #all_data = get_timescale_data() 
     #print(all_data)

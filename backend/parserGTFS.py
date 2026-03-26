@@ -47,6 +47,9 @@ def convert_trips(df, context_list):
         "type": "GtfsTrip",
         "hasRoute": {"type": "Relationship", "object": f"urn:ngsi-ld:GtfsRoute:Porto:{row['route_id']}"},
         "hasService": {"type": "Relationship", "object": f"urn:ngsi-ld:GtfsCalendarRule:Porto:{row['service_id']}"},
+        "hasShape": {"type": "Relationship", "object": f"urn:ngsi-ld:GtfsShape:Porto:{row['shape_id']}"},
+        "headSign": {"type": "Property", "value": str(row['trip_headsign'])},
+        "wheelchair_accessible": {"type": "Property", "value": int(row['wheelchair_accessible'])},
         "@context": context_list
     } for _, row in df.iterrows()]
 
@@ -104,15 +107,14 @@ def convert_transfers(df, context_list):
     } for idx, row in df.iterrows()]
 
 # --- Main Orchestrator ---
-def process_gtfs_zip(uploaded_zip_bytes, selected_domains):
+def process_gtfs_zip(uploaded_zip_bytes, selected_domain):
     """
     Takes a ZIP file and a list of Smart Data Model domains.
     Generates the dynamic context and converts the data into chunked files.
     """
     # 1. Build the dynamic context based on user selection
     context_list = [
-        f"https://raw.githubusercontent.com/smart-data-models/dataModel.{domain}/master/context.jsonld"
-        for domain in selected_domains
+        f"https://raw.githubusercontent.com/smart-data-models/dataModel.{selected_domain}/master/context.jsonld"
     ]
     # Always include the core NGSI-LD context at the end
     context_list.append("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
@@ -120,7 +122,7 @@ def process_gtfs_zip(uploaded_zip_bytes, selected_domains):
     out_zip_buffer = io.BytesIO()
     
     # Target ~80MB per JSON file. This is a balance between file size and number of files, but can be adjusted as needed.
-    CHUNK_SIZE = 150000 
+    CHUNK_SIZE = 100000 
     
     with tempfile.TemporaryDirectory() as tmp_dir:
         with zipfile.ZipFile(uploaded_zip_bytes, "r") as z:

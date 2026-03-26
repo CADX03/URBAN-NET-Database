@@ -5,7 +5,8 @@ import time
 def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
     # If running this script from your host machine, use localhost. 
     # If running from inside the frontend container, keep 'quantumleap'.
-    url = 'http://quantumleap:8668/v2/notify' 
+    #url = 'http://quantumleap:8668/v2/notify' 
+    url = 'http://localhost:8668/v2/notify' 
     
     headers = {
         'Content-Type': 'application/json'
@@ -55,4 +56,6 @@ def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
 
 if __name__ == "__main__":
     # Point the function to your JSON file
-    send_notification_to_quantumleap_in_batches('./../dataCSV/dataCSV_JSON/trafficflowobserved_part4.json', batch_size=500)
+    #send_notification_to_quantumleap_in_batches('./../dataGTFS/ngsi_ld_converted_data/routes.json', batch_size=500)
+    #send_notification_to_quantumleap_in_batches('./../dataGTFS/ngsi_ld_converted_data/calendar.json', batch_size=500)
+    send_notification_to_quantumleap_in_batches('./../dataGTFS/test.json', batch_size=500)

@@ -47,7 +47,7 @@ services:
 
   # 4. TimescaleDB (This IS PostgreSQL + TimeSeries plugin)
   timescale:
-    image: timescale/timescaledb-postgis:latest-pg12
+    image: timescale/timescaledb-ha:pg14-latest
     ports:
       - "5432:5432"
     environment:
@@ -55,6 +55,7 @@ services:
       - POSTGRES_PASSWORD=password
     volumes:
       - postgres-db:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d 
       
 # 5. Keycloak (Identity & Access Management)
   keycloak:
