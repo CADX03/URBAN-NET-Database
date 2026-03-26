@@ -138,6 +138,20 @@ SELECT * FROM etroom;
 
   - Ensured that Client Scopes -> roles -> Mappers -> realm roles is configured to add the realm roles to the Access Token. (This is usually configured this way by default in modern Keycloak versions).
 
+### How to enable the register:
+
+1. Log in to your Keycloak Admin Console (e.g., http://localhost:8080).
+
+2. Select your realm (fiware-realm).
+
+3. On the left sidebar, go to Realm Settings.
+
+4. Click on the Login tab.
+
+5. Toggle User registration to ON.
+
+6. Save your changes.
+
 
 ## Grafana (Visualization)
 
@@ -185,6 +199,6 @@ To read the geoJson type data, this examples will help:
 To do:
 - [x] Melhorar Generic e parser CSV;
 - [x] Visualização;
-- [ ] Meter tipos de dados mais comuns (GeoJSON);
-- [ ] Criar contas;
+- [x] Meter tipos de dados mais comuns (GeoJSON);
+- [x] Criar contas;
 - [ ] Segurança;

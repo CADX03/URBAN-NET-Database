@@ -22,6 +22,7 @@ from backend.parserGeoJSON import process_geojson_in_memory
 AUTHORIZE_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/auth"
 TOKEN_URL = "http://keycloak:8080/realms/fiware-realm/protocol/openid-connect/token"
 REVOKE_URL = "http://keycloak:8080/realms/fiware-realm/protocol/openid-connect/logout"
+BROWSER_LOGOUT_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/logout"
 
 CLIENT_ID = "streamlit-app"
 CLIENT_SECRET = ""
@@ -83,10 +84,15 @@ else:
     with st.sidebar:
         st.success("Authenticated ✅")
         st.info(f"**Current Role:** {'Admin' if is_admin else 'Standard User'}") 
-
+        
         if st.button("Logout"):
+            id_token = token_data.get("id_token", "") if isinstance(token_data, dict) else ""
             st.session_state["token"] = None
-            st.rerun()
+
+            redirect_uri = "http://localhost:8501"
+            keycloak_logout_url = f"{BROWSER_LOGOUT_URL}?post_logout_redirect_uri={redirect_uri}&id_token_hint={id_token}&client_id={CLIENT_ID}"
+            
+            st.markdown(f'<meta http-equiv="refresh" content="0;url={keycloak_logout_url}">', unsafe_allow_html=True)
 
     st.title("🎛️ URBAN-NET Database")
 
