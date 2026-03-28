@@ -5,8 +5,8 @@ import time
 def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
     # If running this script from your host machine, use localhost. 
     # If running from inside the frontend container, keep 'quantumleap'.
-    #url = 'http://quantumleap:8668/v2/notify' 
-    url = 'http://localhost:8668/v2/notify' 
+    url = 'http://quantumleap:8668/v2/notify' 
+    #url = 'http://localhost:8668/v2/notify' 
     
     headers = {
         'Content-Type': 'application/json'
