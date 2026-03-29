@@ -1,4 +1,5 @@
 import requests
+import urllib.parse
 
 def get_sensor_data(entity_id=None, entity_type=None):
     """
@@ -12,8 +13,8 @@ def get_sensor_data(entity_id=None, entity_type=None):
     query_params = {}
 
     if entity_id:
-        # If we have an ID, we append it directly to the URL path
-        url = f"{base_url}/{entity_id}"
+        safe_entity_id = urllib.parse.quote(entity_id, safe='')
+        url = f"{base_url}/{safe_entity_id}"
     else:
         # If we don't have an ID, we query the base URL but MUST provide a type
         url = base_url

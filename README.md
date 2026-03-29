@@ -201,4 +201,5 @@ To do:
 - [x] Visualização;
 - [x] Meter tipos de dados mais comuns (GeoJSON);
 - [x] Criar contas;
-- [ ] Segurança;
+- [ ] Fix getData dos dois;
+- [ ] Segurança (GDPR complience);

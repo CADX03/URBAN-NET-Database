@@ -1,4 +1,5 @@
 import requests
+import urllib.parse
 
 def get_timescale_data(entity_id=None, entity_type=None):
     """
@@ -13,8 +14,8 @@ def get_timescale_data(entity_id=None, entity_type=None):
     query_params = {}
 
     if entity_id:
-        # Construct URL for a specific entity ID
-        url = f"{base_url}/{entity_id}"
+        safe_entity_id = urllib.parse.quote(entity_id, safe='')
+        url = f"{base_url}/{safe_entity_id}"
     else:
         # Base URL to get all entities
         url = base_url
