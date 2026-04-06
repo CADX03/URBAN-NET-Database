@@ -81,7 +81,15 @@ services:
       - timescale
     volumes:
       - grafana-storage:/var/lib/grafana
-
+# 7. Custom Real-Time Receiver
+  receiver:
+    build: ./receiver
+    ports:
+      - "5000:5000"
+    depends_on:
+      - orion
+    environment:
+      - PYTHONUNBUFFERED=1
 volumes:
   mongo-db:
   postgres-db:
