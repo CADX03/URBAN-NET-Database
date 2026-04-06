@@ -1,7 +1,7 @@
 import requests
 import json
 
-def create_subscription(entity_type, receiver_url):
+def create_subscription(entity_type, entity_type_context, receiver_url):
     url = 'http://orion:1026/ngsi-ld/v1/subscriptions'
     #url = 'http://localhost:1026/ngsi-ld/v1/subscriptions'
     
@@ -20,9 +20,9 @@ def create_subscription(entity_type, receiver_url):
                 "accept": "application/json"
             }
         },
-        # 👇 NEW: Added the required context for application/ld+json 👇
         "@context": [
-            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+            entity_type_context
         ]
     }
 
@@ -35,16 +35,17 @@ def create_subscription(entity_type, receiver_url):
         
         if response.status_code == 201:
             print("Success! Subscription created.")
-            # Orion returns the Subscription ID in the Location header
-            print(f"Subscription ID: {response.headers.get('Location')}")
+            return True, f"Success! Subscription ID: {response.headers.get('Location')}"
         elif response.status_code == 409:
-            print("Subscription already exists.")
+            print("Subscription already exists for this endpoint and entity type.")
+            return False, "Subscription already exists for this endpoint and entity type."
         else:
-            print(f"Failed. Status Code: {response.status_code}")
-            print(f"Response: {response.text}")
+            print(f"Failed. Status Code: {response.status_code}. Response: {response.text}")
+            return False, f"Failed. Status Code: {response.status_code}. Response: {response.text}"
             
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Connection error occurred: {e}")
+        return False, f"Connection error occurred: {e}"
 
 if __name__ == "__main__":
     # 1. The type of data you want to listen to (Check your JSON file for the exact "type")

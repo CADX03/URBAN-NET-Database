@@ -1,3 +1,4 @@
+import requests
 import streamlit as st
 import pandas as pd
 import os
@@ -14,6 +15,7 @@ from backend.getDataMongoDB import get_sensor_data
 from backend.getDataTimescaleDB import get_timescale_data
 from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap_in_batches
+from backend.subscribe_to_orion import create_subscription
 from backend.parserCSV import convert_csv_to_ngsild_stream
 from backend.parserGTFS import process_gtfs_zip
 from backend.parserGeoJSON import process_geojson_in_memory
@@ -107,7 +109,8 @@ else:
             "🚗 Convert CSV", 
             "🚇 Convert GTFS",
             "📍 Convert GeoJSON",
-            "📊 Get Data (Visualization)", 
+            "📊 Get Data (Visualization)",
+            "🔔 Real-Time Receiver (Testing)", 
             "🏙️ Data Models"
         ])
         tab_ingestion = tabs[0]
@@ -115,16 +118,18 @@ else:
         tab_gtfs = tabs[2]
         tab_GeoJSON = tabs[3]
         tab_visualization = tabs[4]
-        tab_models = tabs[5]
+        tab_receiver = tabs[5]
+        tab_models = tabs[6]
     # If Normal User -> Only show Visualization and Data Models
     else:
-        tabs = st.tabs(["📊 Get Data (Visualization)", "🏙️ Data Models"])
+        tabs = st.tabs(["📊 Get Data (Visualization)", "🔔 Real-Time Receiver (Testing)", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
         tab_gtfs = None
         tab_GeoJSON = None
         tab_visualization = tabs[0]
-        tab_models = tabs[1]
+        tab_receiver = tabs[1]
+        tab_models = tabs[2]
 
     # === TAB 1: SEND DATA (Only renders if tab_ingestion exists) ===
     if tab_ingestion is not None:
@@ -434,7 +439,56 @@ else:
                 except Exception as e:
                     st.error(f"Could not fetch Timescale data: {e}")
     
-    # === TAB 6: SMART CITIES DATA MODELS ===
+    # === TAB 6: REAL-TIME RECEIVER (TESTING) ===
+    if tab_receiver is not None:
+        with tab_receiver:
+            st.header("🔔 Real-Time Receiver Dashboard")
+            st.info("Subscribe your internal Flask receiver to Orion and view the latest pushed data.")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("1. Subscribe Flask to Orion")
+                entity_type_sub = st.text_input("Entity Type to Watch:", value="TrafficFlowObserved", key="sub_type")
+
+                entity_type_context_sub = st.text_input("Entity Type Context to Watch:", value="https://raw.githubusercontent.com/smart-data-models/dataModel.Transportation/master/context.jsonld", key="sub_context")
+                
+                # Defaults to the internal Docker service name
+                receiver_url = st.text_input("Receiver URL:", value="http://receiver:5000/notify", key="sub_url")
+                
+                if st.button("Create Subscription"):
+                    # 👇 Call your custom function here! 👇
+                    success, message = create_subscription(entity_type_sub, entity_type_context_sub, receiver_url)
+                    
+                    if success:
+                        st.success(message)
+                    elif "already exists" in message:
+                        st.warning(message)
+                    else:
+                        st.error(message)
+
+            with col2:
+                st.subheader("2. View Latest Payload")
+                st.write("Fetch the most recent update pushed from Orion to the Flask receiver.")
+                
+                if st.button("🔄 Fetch Latest Data"):
+                    try:
+                        # Request the data from the Flask app
+                        resp = requests.get("http://receiver:5000/latest")
+                        
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            if data:
+                                st.success("Data retrieved successfully!")
+                                st.json(data)
+                            else:
+                                st.info("No data received by Flask yet. Push some data to Orion first!")
+                        else:
+                            st.error(f"Failed to fetch. Status: {resp.status_code}")
+                    except Exception as e:
+                        st.error(f"Could not connect to the Flask receiver: {e}")
+
+    # === TAB 7: SMART CITIES DATA MODELS ===
     with tab_models:
         st.header("🏙️ Smart Cities Data Models (NGSI-LD)")
         st.markdown("""
