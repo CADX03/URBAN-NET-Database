@@ -104,7 +104,7 @@ else:
     if is_admin:
         tabs = st.tabs([
             "📤 Send Data (Ingestion)", 
-            "🔄 Convert CSV", 
+            "🚗 Convert CSV", 
             "🚇 Convert GTFS",
             "📍 Convert GeoJSON",
             "📊 Get Data (Visualization)", 

@@ -196,10 +196,3 @@ To read the geoJson type data, this examples will help:
   FROM etgtfsstop;
 ```
 
-To do:
-- [x] Melhorar Generic e parser CSV;
-- [x] Visualização;
-- [x] Meter tipos de dados mais comuns (GeoJSON);
-- [x] Criar contas;
-- [ ] Fix getData dos dois;
-- [ ] Segurança (GDPR complience);
