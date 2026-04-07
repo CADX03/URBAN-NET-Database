@@ -16,7 +16,6 @@ def receive_notification():
     
     return "Notification received", 200
 
-# NEW: Streamlit will call this to get the data
 @app.route('/latest', methods=['GET'])
 def get_latest():
     return jsonify(latest_payload), 200

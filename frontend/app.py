@@ -328,25 +328,29 @@ else:
             "Make sure to provide a valid Smart Data Model Context URL for proper semantic annotation. Look at the Smart Cities Data Models tab for examples of context URLs you can use.")
 
             col1, col2 = st.columns(2)
-            
-            with col1:
-                # Entity Type Input
-                entity_type_input = st.text_input(
-                    "NGSI-LD Entity Type:", 
-                    value="OffStreetParking"
-                )
-            
-            with col2:
-                # Smart Data Model Context URL Input
-                context_url_input = st.text_input(
-                    "Smart Data Model Context URL:",
-                    value="https://raw.githubusercontent.com/smart-data-models/dataModel.Parking/master/context.jsonld"
-                )
+            available_options = {
+                "OffStreetParking": "Parking", 
+                "OnStreetParking": "Parking", 
+                "ParkingAccess": "Parking"
+            }
 
+            options_list = list(available_options.items())
+
+            # Entity Type Input
+            selected_option = st.selectbox(
+                "NGSI-LD Entity Type:",
+                options=options_list,
+                format_func=lambda option: f"{option[0]} (Category: {option[1]})",
+                index=0
+            )
+
+            entity_type_input = selected_option[0]     # e.g., "OffStreetParking"
+            entity_category_input = selected_option[1] # e.g., "Parking"
+            
             # File uploader specific to GeoJSON/JSON
             uploaded_geojson = st.file_uploader("Choose GeoJSON File", type=['geojson', 'json'], key="geojson_up")
 
-            if uploaded_geojson and entity_type_input and context_url_input:
+            if uploaded_geojson and entity_type_input and entity_category_input:
                 if st.button("Convert to NGSI-LD", key="btn_convert_geojson"):
                     try:
                         with st.spinner("Processing GeoJSON..."):
@@ -357,7 +361,7 @@ else:
                             ngsild_data = process_geojson_in_memory(
                                 geojson_data, 
                                 entity_type_input, 
-                                context_url_input
+                                entity_category_input
                             )
                             
                             # 3. Convert the Python dictionary back to a formatted JSON string
@@ -443,21 +447,37 @@ else:
     if tab_receiver is not None:
         with tab_receiver:
             st.header("🔔 Real-Time Receiver Dashboard")
-            st.info("Subscribe your internal Flask receiver to Orion and view the latest pushed data.")
+            st.info("Subscribe your internal Flask receiver to Orion and view the latest pushed data. " \
+            "This is only for testing and demonstration purposes to show real-time updates from Orion. " \
+            "Make sure your Flask receiver is running and accessible at the specified URL. " \
+            "Then, create a subscription in Orion that points to this receiver with the appropriate entity type and context. ")
 
             col1, col2 = st.columns(2)
 
             with col1:
                 st.subheader("1. Subscribe Flask to Orion")
-                entity_type_sub = st.text_input("Entity Type to Watch:", value="TrafficFlowObserved", key="sub_type")
 
-                entity_type_context_sub = st.text_input("Entity Type Context to Watch:", value="https://raw.githubusercontent.com/smart-data-models/dataModel.Transportation/master/context.jsonld", key="sub_context")
-                
+                available_options = {
+                    "TrafficFlowObserved": "Transportation"
+                }
+
+                options_list = list(available_options.items())
+
+                # Entity Type Input
+                selected_option = st.selectbox(
+                    "NGSI-LD Entity Type:",
+                    options=options_list,
+                    format_func=lambda option: f"{option[0]} (Category: {option[1]})",
+                    index=0
+                )
+
+                entity_type_sub = selected_option[0]     # e.g., "TrafficFlowObserved"
+                entity_type_context_sub = selected_option[1] # e.g., "Transportation"
+
                 # Defaults to the internal Docker service name
                 receiver_url = st.text_input("Receiver URL:", value="http://receiver:5000/notify", key="sub_url")
                 
                 if st.button("Create Subscription"):
-                    # 👇 Call your custom function here! 👇
                     success, message = create_subscription(entity_type_sub, entity_type_context_sub, receiver_url)
                     
                     if success:
@@ -480,7 +500,9 @@ else:
                             data = resp.json()
                             if data:
                                 st.success("Data retrieved successfully!")
-                                st.json(data)
+                                json_str = json.dumps(data, indent=2)
+                                st.write("JSON Output:")
+                                st.code(json_str, language="json")
                             else:
                                 st.info("No data received by Flask yet. Push some data to Orion first!")
                         else:

@@ -39,7 +39,7 @@ def create_ngsild_entity(feature, entity_type):
 
     return ngsild_entity
 
-def process_geojson_in_memory(geojson_data, entity_type, domain_context_url):
+def process_geojson_in_memory(geojson_data, entity_type, domain_context):
     """Processes a parsed GeoJSON dictionary and returns a list of NGSI-LD dictionaries."""
     
     features = []
@@ -53,6 +53,7 @@ def process_geojson_in_memory(geojson_data, entity_type, domain_context_url):
     ngsild_entities = [create_ngsild_entity(feat, entity_type) for feat in features]
 
     core_context_url = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+    domain_context_url = f"https://raw.githubusercontent.com/smart-data-models/dataModel.{domain_context}/master/context.jsonld"
     
     # Apply the context array exactly as requested
     for entity in ngsild_entities:

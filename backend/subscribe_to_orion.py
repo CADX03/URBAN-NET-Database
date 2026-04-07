@@ -22,7 +22,7 @@ def create_subscription(entity_type, entity_type_context, receiver_url):
         },
         "@context": [
             "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-            entity_type_context
+            f"https://raw.githubusercontent.com/smart-data-models/dataModel.{entity_type_context}/master/context.jsonld"
         ]
     }
 
