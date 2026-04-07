@@ -8,7 +8,6 @@ import jwt
 import uuid
 import io
 import zipfile
-import tempfile
 from streamlit_oauth import OAuth2Component
 
 from backend.getDataMongoDB import get_sensor_data
@@ -19,26 +18,21 @@ from backend.subscribe_to_orion import create_subscription
 from backend.parserCSV import convert_csv_to_ngsild_stream
 from backend.parserGTFS import process_gtfs_zip
 from backend.parserGeoJSON import process_geojson_in_memory
+from utils import save_uploaded_file, load_json_file
 
 # --- Keycloak Configuration ---
-AUTHORIZE_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/auth"
-TOKEN_URL = "http://keycloak:8080/realms/fiware-realm/protocol/openid-connect/token"
-REVOKE_URL = "http://keycloak:8080/realms/fiware-realm/protocol/openid-connect/logout"
-BROWSER_LOGOUT_URL = "http://localhost:8080/realms/fiware-realm/protocol/openid-connect/logout"
+# Fetching from environment variables rather than hardcoding
+AUTHORIZE_URL = os.getenv("KEYCLOAK_AUTHORIZE_URL")
+TOKEN_URL = os.getenv("KEYCLOAK_TOKEN_URL")
+REVOKE_URL = os.getenv("KEYCLOAK_REVOKE_URL")
+BROWSER_LOGOUT_URL = os.getenv("KEYCLOAK_BROWSER_LOGOUT_URL")
 
-CLIENT_ID = "streamlit-app"
+CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID")
 CLIENT_SECRET = ""
 
 st.set_page_config(page_title="URBAN-NET Database", layout="wide")
 
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, TOKEN_URL, REVOKE_URL)
-
-def save_uploaded_file(uploaded_file, suffix=".json"):
-    if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            return tmp_file.name
-    return None
 
 if "token" not in st.session_state:
     st.session_state["token"] = None
@@ -520,141 +514,13 @@ else:
         st.markdown("[View Full Specification for the Smart Cities Data Models 🔗](https://smartdatamodels.org/index.php/smart-cities-domain-at-smart-data-models/)")
 
         with st.expander("🚦 Traffic Flow Observed"):
-            st.json({
-                "id": "urn:ngsi-ld:TrafficFlowObserved:TrafficFlowObserved-Valladolid-osm-60821110",
-                "type": "TrafficFlowObserved",
-                "address": {
-                    "type": "Property",
-                    "value": {
-                    "addressLocality": "Valladolid",
-                    "addressCountry": "ES",
-                    "streetAddress": "Avenida de Salamanca"
-                    }
-                },
-                "averageHeadwayTime": {
-                    "type": "Property",
-                    "value": 0.5
-                },
-                "averageVehicleLength": {
-                    "type": "Property",
-                    "value": 9.87
-                },
-                "averageVehicleSpeed": {
-                    "type": "Property",
-                    "value": 52.6
-                },
-                "dateObserved": {
-                    "type": "Property",
-                    "value": {
-                    "@type": "DateTime",
-                    "@value": "2016-12-07T11:10:00"
-                    }
-                },
-                "dateObservedFrom": {
-                    "type": "Property",
-                    "value": {
-                    "@type": "DateTime",
-                    "@value": "2016-12-07T11:10:00Z"
-                    }
-                },
-                "dateObservedTo": {
-                    "type": "Property",
-                    "value": {
-                    "@type": "DateTime",
-                    "@value": "2016-12-07T11:15:00Z"
-                    }
-                },
-                "intensity": {
-                    "type": "Property",
-                    "value": 197
-                },
-                "laneDirection": {
-                    "type": "Property",
-                    "value": "forward"
-                },
-                "laneId": {
-                    "type": "Property",
-                    "value": 1
-                },
-                "location": {
-                    "type": "GeoProperty",
-                    "value": {
-                    "type": "LineString",
-                    "coordinates": [
-                        [
-                        -4.73735395519672,
-                        41.6538181849672
-                        ],
-                        [
-                        -4.73414858659993,
-                        41.6600594193478
-                        ],
-                        [
-                        -4.73447575302641,
-                        41.659585195093
-                        ]
-                    ]
-                    }
-                },
-                "occupancy": {
-                    "type": "Property",
-                    "value": 0.76
-                },
-                "@context": [
-                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-                    "https://raw.githubusercontent.com/smart-data-models/dataModel.Transportation/master/context.jsonld"
-                ]
-            })
+            st.json(load_json_file('examples/traffic_flow.json'))
             st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Transportation/tree/master/TrafficFlowObserved)")
 
         with st.expander("🚌 Public Transport Stop GTFS (Urban Mobility)"):
-            st.json({
-                    "id": "urn:ngsi-ld:GtfsStop:Malaga_101",
-                    "type": "GtfsStop",
-                    "code": "101",
-                    "location": {
-                        "coordinates": [
-                        -4.424393,
-                        36.716872
-                        ],
-                        "type": "Point"
-                    },
-                    "name": "Alameda Principal Sur",
-                    "operatedBy": [
-                        "urn:ngsi-ld:GtfsAgency:Malaga_EMT"
-                    ],
-                    "@context": [
-                        "https://raw.githubusercontent.com/smart-data-models/dataModel.UrbanMobility/master/context.jsonld"
-                    ]
-                })
+            st.json(load_json_file('examples/gtfs_stop.json'))
             st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.UrbanMobility/tree/master/GtfsStop)")
-    
+        
         with st.expander("🚗 Off-Street Parking (Parking)"):
-            st.json({
-                "id": "urn:ngsi-ld:OffStreetParking:Porto:ParkingLot123",
-                "type": "OffStreetParking",
-                "name": {
-                    "type": "Property",
-                    "value": "Parking Lot 123"
-                },
-                "location": {
-                    "type": "GeoProperty",
-                    "value": {
-                        "type": "Point",
-                        "coordinates": [-8.611, 41.149]
-                    }
-                },
-                "totalCapacity": {
-                    "type": "Property",
-                    "value": 100
-                },
-                "availableSpaces": {
-                    "type": "Property",
-                    "value": 20
-                },
-                "@context": [
-                    "https://raw.githubusercontent.com/smart-data-models/dataModel.Parking/master/context.jsonld",
-                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-                ]
-            })
+            st.json(load_json_file('examples/off_street_parking.json'))
             st.markdown("[View Full Specification 🔗](https://github.com/smart-data-models/dataModel.Parking/tree/master/OffStreetParking)")

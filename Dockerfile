@@ -16,8 +16,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy your python files into the container
-COPY ./frontend/app.py .
+COPY ./frontend/app.py ./frontend/utils.py ./
 COPY backend/ ./backend/
+COPY examples/ ./examples/
 
 # Expose Streamlit's default port
 EXPOSE 8501

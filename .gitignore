@@ -3,4 +3,5 @@
 /output
 /dataGTFS
 /dataGeoJSON
+.env
 ToDo.md
