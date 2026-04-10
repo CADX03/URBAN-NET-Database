@@ -3,3 +3,4 @@ pandas
 requests
 streamlit-oauth
 PyJWT
+paho-mqtt

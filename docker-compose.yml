@@ -11,6 +11,8 @@ services:
       - ORION_HOST=orion
       - QL_HOST=quantumleap
       - TIMESCALE_HOST=timescale
+      - IOTA_HOST=iot-agent
+      - MQTT_HOST=mosquitto
       - KEYCLOAK_AUTHORIZE_URL=${KEYCLOAK_AUTHORIZE_URL}
       - KEYCLOAK_TOKEN_URL=${KEYCLOAK_TOKEN_URL}
       - KEYCLOAK_REVOKE_URL=${KEYCLOAK_REVOKE_URL}
@@ -87,15 +89,45 @@ services:
     volumes:
       - grafana-storage:/var/lib/grafana
 
-# 7. Custom Real-Time Receiver
-  receiver:
-    build: ./receiver
+# 7. Mosquitto MQTT Broker
+  mosquitto:
+    image: eclipse-mosquitto:2.0.18
+    hostname: mosquitto
     ports:
-      - "5000:5000"
+      - "1883:1883" # Standard MQTT port
+      - "9001:9001" # WebSockets port (optional, good for web dashboards)
+    volumes:
+      # Mounts a local config file to allow anonymous local connections 
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+# 8. FIWARE IoT Agent (JSON over MQTT)
+  iot-agent:
+    image: fiware/iotagent-json:latest
+    hostname: iot-agent
+    ports:
+      - "4041:4041" # Port for provisioning devices via API
     depends_on:
+      - mongo
+      - mosquitto
       - orion
     environment:
-      - PYTHONUNBUFFERED=1
+      - IOTA_CB_HOST=orion # Context Broker Host
+      - IOTA_CB_PORT=1026 # Context Broker Port
+      - IOTA_NORTH_PORT=4041
+      - IOTA_REGISTRY_TYPE=mongodb # Stores device mappings in Mongo
+      - IOTA_MONGO_HOST=mongo
+      - IOTA_MONGO_PORT=27017
+      - IOTA_MONGO_DB=iotagentjson
+      - IOTA_MQTT_HOST=mosquitto # Connects to your Mosquitto broker
+      - IOTA_MQTT_PORT=1883
+      - IOTA_CB_NGSI_VERSION=ld # Ensures compatibility with Orion-LD
+      - IOTA_AUTOCAST=true # Automatically casts numbers and booleans
+      - IOTA_LOG_LEVEL=DEBUG
+      - IOTA_JSON_LD_CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+      - IOTA_DEFAULT_RESOURCE=/iot/json          # Must match resource in service provisioning
+      - IOTA_PROVIDER_URL=http://iot-agent:4041  # Agent's own address for Orion registration
+      - IOTA_CB_LD_CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+      - IOTA_TIMESTAMP=true
 volumes:
   mongo-db:
   postgres-db:

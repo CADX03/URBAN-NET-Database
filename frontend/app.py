@@ -19,6 +19,10 @@ from backend.parserCSV import convert_csv_to_ngsild_stream
 from backend.parserGTFS import process_gtfs_zip
 from backend.parserGeoJSON import process_geojson_in_memory
 from utils import save_uploaded_file, load_json_file
+from backend.iot_agent_tester import (
+    provision_service, delete_service, provision_device,
+    delete_device, publish_mqtt, query_entity, check_health
+)
 
 # --- Keycloak Configuration ---
 # Fetching from environment variables rather than hardcoding
@@ -104,7 +108,7 @@ else:
             "🚇 Convert GTFS",
             "📍 Convert GeoJSON",
             "📊 Get Data (Visualization)",
-            "🔔 Real-Time Receiver (Testing)", 
+            "🧪 IoT Agent Tester",
             "🏙️ Data Models"
         ])
         tab_ingestion = tabs[0]
@@ -112,17 +116,17 @@ else:
         tab_gtfs = tabs[2]
         tab_GeoJSON = tabs[3]
         tab_visualization = tabs[4]
-        tab_receiver = tabs[5]
+        tab_iot_test = tabs[5]
         tab_models = tabs[6]
     # If Normal User -> Only show Visualization and Data Models
     else:
-        tabs = st.tabs(["📊 Get Data (Visualization)", "🔔 Real-Time Receiver (Testing)", "🏙️ Data Models"])
+        tabs = st.tabs(["📊 Get Data (Visualization)", "🧪 IoT Agent Tester", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
         tab_gtfs = None
         tab_GeoJSON = None
         tab_visualization = tabs[0]
-        tab_receiver = tabs[1]
+        tab_iot_test = tabs[1]
         tab_models = tabs[2]
 
     # === TAB 1: SEND DATA (Only renders if tab_ingestion exists) ===
@@ -437,72 +441,110 @@ else:
                 except Exception as e:
                     st.error(f"Could not fetch Timescale data: {e}")
     
-    # === TAB 6: REAL-TIME RECEIVER (TESTING) ===
-    if tab_receiver is not None:
-        with tab_receiver:
-            st.header("🔔 Real-Time Receiver Dashboard")
-            st.info("Subscribe your internal Flask receiver to Orion and view the latest pushed data. " \
-            "This is only for testing and demonstration purposes to show real-time updates from Orion. " \
-            "Make sure your Flask receiver is running and accessible at the specified URL. " \
-            "Then, create a subscription in Orion that points to this receiver with the appropriate entity type and context. ")
+    # === TAB 6: IoT AGENT TESTER ===
+    if tab_iot_test is not None:
+        with tab_iot_test:
+            st.header("IoT Agent Pipeline Tester")
 
-            col1, col2 = st.columns(2)
+            # --- Health Check ---
+            with st.expander("Pipeline health check", expanded=False):
+                if st.button("Check services"):
+                    health = check_health()
+                    cols = st.columns(len(health))
+                    for col, (name, status) in zip(cols, health.items()):
+                        col.metric(name, status)
 
-            with col1:
-                st.subheader("1. Subscribe Flask to Orion")
+            st.divider()
 
-                available_options = {
-                    "TrafficFlowObserved": "Transportation"
-                }
+            # --- Step 1: Service Provisioning ---
+            st.subheader("Step 1 — Provision service")
+            col1, col2, col3, col4 = st.columns(4)
+            svc_apikey   = col1.text_input("API key",       value="my-secret-key", key="svc_apikey")
+            svc_type     = col2.text_input("Entity type",   value="Sensor",        key="svc_type")
+            svc_resource = col3.text_input("Resource",      value="/iot/json",     key="svc_resource")
+            svc_cbroker  = col4.text_input("Context broker",value="http://orion:1026", key="svc_cbroker")
 
-                options_list = list(available_options.items())
+            col_a, col_b = st.columns([1, 5])
+            if col_a.button("Provision service"):
+                code, body = provision_service(svc_apikey, svc_type, svc_resource, svc_cbroker)
+                if code in (200, 201):
+                    st.success(f"Service provisioned — {code}")
+                else:
+                    st.error(f"Failed ({code}): {body}")
 
-                # Entity Type Input
-                selected_option = st.selectbox(
-                    "NGSI-LD Entity Type:",
-                    options=options_list,
-                    format_func=lambda option: f"{option[0]} (Category: {option[1]})",
-                    index=0
-                )
+            if col_b.button("Delete service"):
+                code, body = delete_service(svc_apikey, svc_resource)
+                st.info(f"Delete response ({code}): {body}")
 
-                entity_type_sub = selected_option[0]     # e.g., "TrafficFlowObserved"
-                entity_type_context_sub = selected_option[1] # e.g., "Transportation"
+            st.divider()
 
-                # Defaults to the internal Docker service name
-                receiver_url = st.text_input("Receiver URL:", value="http://receiver:5000/notify", key="sub_url")
-                
-                if st.button("Create Subscription"):
-                    success, message = create_subscription(entity_type_sub, entity_type_context_sub, receiver_url)
-                    
-                    if success:
-                        st.success(message)
-                    elif "already exists" in message:
-                        st.warning(message)
+            # --- Step 2: Device Provisioning ---
+            st.subheader("Step 2 — Provision device")
+            col1, col2, col3, col4 = st.columns(4)
+            dev_id      = col1.text_input("Device ID",    value="sensor001",             key="dev_id")
+            dev_entity  = col2.text_input("Entity name",  value="urn:ngsi-ld:Sensor:001",key="dev_entity")
+            dev_type    = col3.text_input("Entity type",  value="Sensor",                key="dev_type")
+            dev_apikey  = col4.text_input("API key",      value="my-secret-key",         key="dev_apikey")
+
+            st.markdown("**Attributes** — one per row: `object_id, name, type`")
+            attrs_raw = st.text_area(
+                "Attributes (JSON list)",
+                value='[{"object_id": "t", "name": "temperature", "type": "Property"}]',
+                height=100, key="dev_attrs"
+            )
+
+            col_a, col_b = st.columns([1, 5])
+            if col_a.button("Provision device"):
+                try:
+                    attrs = json.loads(attrs_raw)
+                    code, body = provision_device(dev_id, dev_entity, dev_type, dev_apikey, attrs)
+                    if code in (200, 201):
+                        st.success(f"Device provisioned — {code}")
                     else:
-                        st.error(message)
+                        st.error(f"Failed ({code}): {body}")
+                except json.JSONDecodeError:
+                    st.error("Invalid JSON in attributes field.")
 
-            with col2:
-                st.subheader("2. View Latest Payload")
-                st.write("Fetch the most recent update pushed from Orion to the Flask receiver.")
-                
-                if st.button("🔄 Fetch Latest Data"):
-                    try:
-                        # Request the data from the Flask app
-                        resp = requests.get("http://receiver:5000/latest")
-                        
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            if data:
-                                st.success("Data retrieved successfully!")
-                                json_str = json.dumps(data, indent=2)
-                                st.write("JSON Output:")
-                                st.code(json_str, language="json")
-                            else:
-                                st.info("No data received by Flask yet. Push some data to Orion first!")
-                        else:
-                            st.error(f"Failed to fetch. Status: {resp.status_code}")
-                    except Exception as e:
-                        st.error(f"Could not connect to the Flask receiver: {e}")
+            if col_b.button("Delete device"):
+                code, body = delete_device(dev_id)
+                st.info(f"Delete response ({code}): {body}")
+
+            st.divider()
+
+            # --- Step 3: Publish MQTT ---
+            st.subheader("Step 3 — Publish MQTT message")
+            col1, col2, col3 = st.columns(3)
+            mqtt_apikey  = col1.text_input("API key",   value="my-secret-key", key="mqtt_apikey")
+            mqtt_dev     = col2.text_input("Device ID", value="sensor001",     key="mqtt_dev")
+            mqtt_payload = col3.text_input("Payload",   value='{"t": 24.5}',  key="mqtt_payload")
+
+            st.caption(f"Topic → `/{mqtt_apikey}/{mqtt_dev}/attrs`")
+
+            if st.button("Publish"):
+                try:
+                    payload_dict = json.loads(mqtt_payload)
+                    topic = publish_mqtt(mqtt_apikey, mqtt_dev, payload_dict)
+                    st.success(f"Published to `{topic}`")
+                except json.JSONDecodeError:
+                    st.error("Payload must be valid JSON.")
+                except Exception as e:
+                    st.error(f"MQTT error: {e}")
+
+            st.divider()
+
+            # --- Step 4: Query Orion-LD ---
+            st.subheader("Step 4 — Query Orion-LD")
+            col1, col2 = st.columns([3, 1])
+            query_id     = col1.text_input("Entity ID", value="urn:ngsi-ld:Sensor:001", key="q_id")
+            query_tenant = col2.text_input("Tenant",    value="openiot",                key="q_tenant")
+
+            if st.button("Query entity"):
+                code, result = query_entity(query_id, query_tenant)
+                if code == 200:
+                    st.success(f"Entity found — {code}")
+                    st.json(result)
+                else:
+                    st.error(f"Not found ({code}): {result}")
 
     # === TAB 7: SMART CITIES DATA MODELS ===
     with tab_models:

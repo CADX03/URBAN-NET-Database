@@ -195,4 +195,78 @@ To read the geoJson type data, this examples will help:
     ST_Y(location) AS latitude
   FROM etgtfsstop;
 ```
+## Mosquitto / IoT Agent
 
+```bash
+curl -iX POST \
+  'http://localhost:4041/iot/services' \
+  -H 'Content-Type: application/json' \
+  -H 'fiware-service: openiot' \
+  -H 'fiware-servicepath: /' \
+  -d '{
+    "services": [{
+      "apikey": "my-secret-key",
+      "cbroker": "http://orion:1026",
+      "entity_type": "Sensor",
+      "resource": "/iot/json"
+    }]
+  }'
+```
+
+```bash
+curl -iX POST \
+  'http://localhost:4041/iot/devices' \
+  -H 'Content-Type: application/json' \
+  -H 'fiware-service: openiot' \
+  -H 'fiware-servicepath: /' \
+  -d '{
+    "devices": [{
+      "device_id": "sensor001",
+      "entity_name": "urn:ngsi-ld:Sensor:001",
+      "entity_type": "Sensor",
+      "protocol": "IoTA-JSON",
+      "transport": "MQTT",
+      "apikey": "my-secret-key",
+      "attributes": [
+        { "object_id": "t", "name": "temperature", "type": "Property" }
+      ]
+    }]
+  }'
+```
+
+```bash
+curl -iX POST \
+  'http://localhost:1026/ngsi-ld/v1/subscriptions/' \
+  -H 'Content-Type: application/ld+json' \
+  -H 'fiware-service: openiot' \
+  -H 'fiware-servicepath: /' \
+  -d '{
+  "description": "Notify QuantumLeap of temperature changes",
+  "type": "Subscription",
+  "entities": [{"type": "Sensor"}],
+  "watchedAttributes": ["temperature"],
+  "notification": {
+    "attributes": ["temperature"],
+    "format": "normalized",
+    "endpoint": {
+      "uri": "http://quantumleap:8668/v2/notify",
+      "accept": "application/json"
+    }
+  },
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+}'
+```
+
+```bash
+# Publish MQTT message
+docker exec -it urban-net-database-mosquitto-1 \
+  mosquitto_pub -h localhost \
+  -t "/my-secret-key/sensor001/attrs" \
+  -m '{"t": 24.5}'
+
+# Wait 2-3 seconds, then query Orion
+curl -X GET \
+  'http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:Sensor:001' \
+  -H 'NGSILD-Tenant: openiot' \ 
+  -H 'Accept: application/ld+json'
+```
