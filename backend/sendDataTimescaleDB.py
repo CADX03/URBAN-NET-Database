@@ -22,6 +22,7 @@ def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
             raw_entities = [raw_entities]
 
         total_entities = len(raw_entities)
+        batches_sent = 0
         print(f"Successfully loaded {total_entities} entities. Starting batch upload...\n")
 
         # Chunk the data and send in batches
@@ -35,25 +36,35 @@ def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
             response = requests.post(url, headers=headers, json=payload)
             
             if response.status_code in [200, 201, 204]:
-                print(f"[{i + len(batch)}/{total_entities}] Success! Batch sent.")
+                batches_sent += 1
             else:
-                print(f"Failed to send batch starting at index {i}. Status: {response.status_code}")
-                print(f"Response: {response.text}")
-                # Optional: break the loop if a batch fails, or continue to the next
-                break 
+                # If a batch fails, stop everything and raise an error to the frontend
+                print(f"Failed at batch starting at index {i}. Status: {response.status_code}. Response: {response.text}")
+                raise Exception(f"Failed at batch starting at index {i}. Status: {response.status_code}. Response: {response.text}")
             
             # Brief pause to let QuantumLeap and TimescaleDB breathe
             time.sleep(0.1) 
 
-        print("\nFinished sending data.")
+        # If the loop finishes without raising an exception, return a success summary
+        print(f"All batches sent successfully! Total entities: {total_entities}, Total batches: {batches_sent}")
+        return f"Successfully sent {total_entities} entities across {batches_sent} batches to QuantumLeap."
 
     except FileNotFoundError:
         print(f"Error: The file '{file_path}' was not found.")
+        raise Exception(f"The file '{file_path}' was not found.")
+    
     except json.JSONDecodeError:
         print(f"Error: The file '{file_path}' does not contain valid JSON.")
+        raise Exception(f"The file '{file_path}' does not contain valid JSON.")
+    
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to QuantumLeap: {e}")
+        raise Exception(f"Error connecting to QuantumLeap: {e}")
 
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise Exception(f"An unexpected error occurred: {e}")
+    
 if __name__ == "__main__":
     # Point the function to your JSON file
     #send_notification_to_quantumleap_in_batches('./../dataGTFS/ngsi_ld_converted_data/routes.json', batch_size=500)

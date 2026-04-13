@@ -30,17 +30,27 @@ def send_data_to_broker(file_path):
         
         if response.status_code == 201:
             print("Success! Entity created.")
+            return "Entity created successfully."
         elif response.status_code == 207:
             print("Batch operation returned 207 (Multi-Status).")
             print(f"Broker Response:\n{json.dumps(response.json(), indent=2)}")
+            return f"Batch operation returned 207 (Multi-Status).\nBroker Response:\n{json.dumps(response.json(), indent=2)}"
         else:
             print(f"Failed. Status Code: {response.status_code}")
             print(f"Response: {response.text}")
+            raise Exception(f"Broker rejected request. Status Code: {response.status_code}. Response: {response.text}")
             
     except FileNotFoundError:
         print(f"Error: The file '{file_path}' was not found.")
+        raise Exception(f"The file '{file_path}' was not found.")
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Network error while connecting to the broker: {e}")
+        raise Exception(f"Network error while connecting to the broker: {e}")
+    
     except Exception as e:
         print(f"An error occurred: {e}")
+        raise Exception(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     # Now you can safely call this on both files!
