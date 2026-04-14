@@ -270,3 +270,91 @@ curl -X GET \
   -H 'NGSILD-Tenant: openiot' \ 
   -H 'Accept: application/ld+json'
 ```
+
+### Test for real time case
+
+1. Step 1 — Provision service
+  - This step groups your devices together. You can leave the resource and context broker as their defaults.
+
+  - API key: traffic-key (or any unique string, just be consistent)
+
+  - Entity type: TrafficFlowObserved
+
+  - Resource: /iot/json
+
+  - Context broker: http://orion:1026
+
+2. Step 2 — Provision device
+  - This maps the simple JSON keys coming from your MQTT device (object_id) to the formal NGSI-LD attributes (name). We will use identical names for simplicity.
+
+  - Device ID: traffic001
+
+  - Entity name: urn:ngsi-ld:TrafficFlowObserved:9577808
+
+  - Entity type: TrafficFlowObserved
+
+  - API key: traffic-key (must exactly match Step 1)
+
+  - Attributes (JSON list): Copy and paste the following block:
+  ```json
+  [
+    {"object_id": "dateObserved", "name": "dateObserved", "type": "Property"},
+    {"object_id": "equipmentId", "name": "equipmentId", "type": "Property"},
+    {"object_id": "laneDirection", "name": "laneDirection", "type": "Property"},
+    {"object_id": "intensity", "name": "intensity", "type": "Property"},
+    {"object_id": "averageVehicleSpeed", "name": "averageVehicleSpeed", "type": "Property"},
+    {"object_id": "occupancy", "name": "occupancy", "type": "Property"},
+    {"object_id": "AGG_ID", "name": "AGG_ID", "type": "Property"},
+    {"object_id": "AGG_PERIOD_LEN_MINS", "name": "AGG_PERIOD_LEN_MINS", "type": "Property"},
+    {"object_id": "NR_LANES", "name": "NR_LANES", "type": "Property"},
+    {"object_id": "AVG_SPEED_HARMONIC", "name": "AVG_SPEED_HARMONIC", "type": "Property"},
+    {"object_id": "AVG_LENGTH", "name": "AVG_LENGTH", "type": "Property"},
+    {"object_id": "AVG_SPACING", "name": "AVG_SPACING", "type": "Property"},
+    {"object_id": "LIGHT_VEHICLE_RATE", "name": "LIGHT_VEHICLE_RATE", "type": "Property"},
+    {"object_id": "VOLUME_CLASSE_A", "name": "VOLUME_CLASSE_A", "type": "Property"},
+    {"object_id": "VOLUME_CLASSE_B", "name": "VOLUME_CLASSE_B", "type": "Property"},
+    {"object_id": "VOLUME_CLASSE_C", "name": "VOLUME_CLASSE_C", "type": "Property"},
+    {"object_id": "VOLUME_CLASSE_D", "name": "VOLUME_CLASSE_D", "type": "Property"},
+    {"object_id": "VOLUME_CLASSE_0", "name": "VOLUME_CLASSE_0", "type": "Property"},
+    {"object_id": "axleClassVolumes", "name": "axleClassVolumes", "type": "Property"}
+  ]
+  ```
+
+3. Step 3 — Publish MQTT message
+  - Now you simulate the actual IoT sensor sending its readings. The IoT Agent handles wrapping these in the {"type": "Property", "value": ...} NGSI-LD structure, so your payload should just be the raw values.
+
+  - API key: traffic-key
+
+  - Device ID: traffic001
+
+  - Payload: Copy and paste the following block:
+  ```json
+  {
+    "dateObserved": "2015-01-01T11:55:00Z",
+    "equipmentId": "121729",
+    "laneDirection": "D",
+    "intensity": 48,
+    "averageVehicleSpeed": 97.77,
+    "occupancy": 1.54,
+    "AGG_ID": 448873,
+    "AGG_PERIOD_LEN_MINS": 5,
+    "NR_LANES": 3,
+    "AVG_SPEED_HARMONIC": 94.9,
+    "AVG_LENGTH": 443.75,
+    "AVG_SPACING": 283.4,
+    "LIGHT_VEHICLE_RATE": 100,
+    "VOLUME_CLASSE_A": 0,
+    "VOLUME_CLASSE_B": 48,
+    "VOLUME_CLASSE_C": 0,
+    "VOLUME_CLASSE_D": 0,
+    "VOLUME_CLASSE_0": 0,
+    "axleClassVolumes": { "E2": 48 }
+  }
+  ```
+
+4. Step 4 — Query Orion-LD
+  - Once the MQTT message is successfully published, the IoT agent will process it and update the context broker. You can verify the final NGSI-LD structure here.
+
+  - Entity ID: urn:ngsi-ld:TrafficFlowObserved:9577808
+
+  - Tenant: openiot (This matches the fiware-service header hardcoded in your Python script)

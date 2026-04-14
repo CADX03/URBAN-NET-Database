@@ -14,11 +14,10 @@ from backend.getDataMongoDB import get_sensor_data
 from backend.getDataTimescaleDB import get_timescale_data
 from backend.sendDataMongoDB import send_data_to_broker
 from backend.sendDataTimescaleDB import send_notification_to_quantumleap_in_batches
-from backend.subscribe_to_orion import create_subscription
 from backend.parserCSV import convert_csv_to_ngsild_stream
 from backend.parserGTFS import process_gtfs_zip
 from backend.parserGeoJSON import process_geojson_in_memory
-from utils import save_uploaded_file, load_json_file
+from utils import save_uploaded_file, load_json_file, check_health_db
 from backend.iot_agent_tester import (
     provision_service, delete_service, provision_device,
     delete_device, publish_mqtt, query_entity, check_health
@@ -129,11 +128,21 @@ else:
         tab_iot_test = tabs[1]
         tab_models = tabs[2]
 
-    # === TAB 1: SEND DATA (Only renders if tab_ingestion exists) ===
+    # === TAB 1: SEND DATA  ===
     if tab_ingestion is not None:
         with tab_ingestion:
             st.header("Data Ingestion")
             
+            # --- Health Check ---
+            with st.expander("Database health check", expanded=False):
+                if st.button("Check services", key="db_health_check_button"):
+                    health = check_health_db()
+                    cols = st.columns(len(health))
+                    for col, (name, status) in zip(cols, health.items()):
+                        col.metric(name, status)
+
+            st.divider()
+
             col1, col2 = st.columns(2)
             with col1:
                 st.subheader("1. Update Context (Orion)")
