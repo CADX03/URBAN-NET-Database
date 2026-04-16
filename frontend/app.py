@@ -106,27 +106,27 @@ else:
             "🚗 Convert CSV", 
             "🚇 Convert GTFS",
             "📍 Convert GeoJSON",
-            "📊 Get Data (Visualization)",
             "🧪 IoT Agent Tester",
+            "📊 Get Data (Visualization)",
             "🏙️ Data Models"
         ])
         tab_ingestion = tabs[0]
         tab_conversion = tabs[1]
         tab_gtfs = tabs[2]
         tab_GeoJSON = tabs[3]
-        tab_visualization = tabs[4]
-        tab_iot_test = tabs[5]
+        tab_iot_test = tabs[4]
+        tab_visualization = tabs[5]
         tab_models = tabs[6]
     # If Normal User -> Only show Visualization and Data Models
     else:
-        tabs = st.tabs(["📊 Get Data (Visualization)", "🧪 IoT Agent Tester", "🏙️ Data Models"])
+        tabs = st.tabs(["📊 Get Data (Visualization)", "🏙️ Data Models"])
         tab_ingestion = None
         tab_conversion = None
         tab_gtfs = None
         tab_GeoJSON = None
+        tab_iot_test = None
         tab_visualization = tabs[0]
-        tab_iot_test = tabs[1]
-        tab_models = tabs[2]
+        tab_models = tabs[1]
 
     # === TAB 1: SEND DATA  ===
     if tab_ingestion is not None:
@@ -387,70 +387,9 @@ else:
                     except json.JSONDecodeError:
                         st.error("Error: The uploaded file is not a valid JSON document.")
                     except Exception as e:
-                        st.error(f"An error occurred during conversion: {e}")
-            
-    # === TAB 5: GET DATA (Renders for everyone) ===
-    with tab_visualization:
-        st.header("Data Visualization")
-        
-        with st.container():
-            c1, c2, c3 = st.columns([1, 1, 1])
-            with c1:
-                entity_id = st.text_input("Entity ID", value="")
-            with c2:
-                entity_type = st.text_input("Entity Type", value="")
-            with c3:
-                st.write("") 
-                st.write("") 
-                refresh = st.button("Fetch Data")
-
-        tab_realtime, tab_history = st.tabs(["⏱️ Current State (MongoDB)", "📈 History (TimescaleDB)"])
-
-        if refresh:
-            # --- Real-time Data (Orion) ---
-            with tab_realtime:
-                try:
-                    current_data = get_sensor_data(entity_id=entity_id, entity_type=entity_type)
-                    json_str = json.dumps(current_data, indent=2)
-                    
-                    st.download_button(
-                        label="📄 Download JSON",
-                        data=json_str, file_name=f"current_data_{entity_id}.json", mime="application/json"
-                    )
-                    st.write("Or copy raw JSON:")
-                    st.code(json_str, language="json")
-                except Exception as e:
-                    st.error(f"Could not fetch Orion data: {e}")
-
-            # --- Historical Data (Timescale) ---
-            with tab_history:
-                try:
-                    history_data = get_timescale_data(entity_id=entity_id, entity_type=entity_type)
-                    if history_data:
-                        
-                        # --- 1. JSON DISPLAY & DOWNLOAD ---
-                        st.subheader("Raw Data (JSON)")
-                        json_str_history = json.dumps(history_data, indent=2)
-                        
-                        st.download_button(
-                            label="📄 Download JSON",
-                            data=json_str_history, 
-                            file_name=f"historical_data_{entity_id}.json", 
-                            mime="application/json"
-                        )
-                        
-                        st.write("Or copy raw JSON:")
-                        st.code(json_str_history, language="json")
-                            
-                        st.divider() # Adds a nice visual break
-
-                    else:
-                        st.warning("No historical data found.")
-                
-                except Exception as e:
-                    st.error(f"Could not fetch Timescale data: {e}")
+                        st.error(f"An error occurred during conversion: {e}")       
     
-    # === TAB 6: IoT AGENT TESTER ===
+    # === TAB 5: IoT AGENT TESTER ===
     if tab_iot_test is not None:
         with tab_iot_test:
             st.header("IoT Agent Pipeline Tester")
@@ -554,6 +493,67 @@ else:
                     st.json(result)
                 else:
                     st.error(f"Not found ({code}): {result}")
+
+    # === TAB 6: GET DATA (Renders for everyone) ===
+    with tab_visualization:
+        st.header("Data Visualization")
+        
+        with st.container():
+            c1, c2, c3 = st.columns([1, 1, 1])
+            with c1:
+                entity_id = st.text_input("Entity ID", value="")
+            with c2:
+                entity_type = st.text_input("Entity Type", value="")
+            with c3:
+                st.write("") 
+                st.write("") 
+                refresh = st.button("Fetch Data")
+
+        tab_realtime, tab_history = st.tabs(["⏱️ Current State (MongoDB)", "📈 History (TimescaleDB)"])
+
+        if refresh:
+            # --- Real-time Data (Orion) ---
+            with tab_realtime:
+                try:
+                    current_data = get_sensor_data(entity_id=entity_id, entity_type=entity_type)
+                    json_str = json.dumps(current_data, indent=2)
+                    
+                    st.download_button(
+                        label="📄 Download JSON",
+                        data=json_str, file_name=f"current_data_{entity_id}.json", mime="application/json"
+                    )
+                    st.write("Or copy raw JSON:")
+                    st.code(json_str, language="json")
+                except Exception as e:
+                    st.error(f"Could not fetch Orion data: {e}")
+
+            # --- Historical Data (Timescale) ---
+            with tab_history:
+                try:
+                    history_data = get_timescale_data(entity_id=entity_id, entity_type=entity_type)
+                    if history_data:
+                        
+                        # --- 1. JSON DISPLAY & DOWNLOAD ---
+                        st.subheader("Raw Data (JSON)")
+                        json_str_history = json.dumps(history_data, indent=2)
+                        
+                        st.download_button(
+                            label="📄 Download JSON",
+                            data=json_str_history, 
+                            file_name=f"historical_data_{entity_id}.json", 
+                            mime="application/json"
+                        )
+                        
+                        st.write("Or copy raw JSON:")
+                        st.code(json_str_history, language="json")
+                            
+                        st.divider() # Adds a nice visual break
+
+                    else:
+                        st.warning("No historical data found.")
+                
+                except Exception as e:
+                    st.error(f"Could not fetch Timescale data: {e}")
 
     # === TAB 7: SMART CITIES DATA MODELS ===
     with tab_models:

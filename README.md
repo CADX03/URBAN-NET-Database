@@ -357,4 +357,4 @@ curl -X GET \
 
   - Entity ID: urn:ngsi-ld:TrafficFlowObserved:9577808
 
-  - Tenant: openiot (This matches the fiware-service header hardcoded in your Python script)
+  - Tenant: openiot
