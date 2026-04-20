@@ -19,29 +19,23 @@ services:
       - KEYCLOAK_BROWSER_LOGOUT_URL=${KEYCLOAK_BROWSER_LOGOUT_URL}
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
 
-# 1. Orion-LD Context Broker
+# 1. Orion-LD Context Broker (Ports removed - Internal Only)
   orion:
     image: fiware/orion-ld
-    ports:
-      - "1026:1026"
     command: -dbhost mongo -logLevel DEBUG
     depends_on:
       - mongo
 
-# 2. MongoDB (For Orion's current state)
+# 2. MongoDB (Ports removed - Internal Only)
   mongo:
     image: mongo:4.4
-    ports:
-      - "27017:27017"
     command: --nojournal
     volumes:
       - mongo-db:/data/db
 
-# 3. QuantumLeap (The Connector for History)
+# 3. QuantumLeap (Ports removed - Internal Only)
   quantumleap:
     image: orchestracities/quantumleap
-    ports:
-      - "8668:8668"
     environment:
       - POSTGRES_HOST=timescale
       - POSTGRES_PORT=5432
@@ -52,11 +46,9 @@ services:
     depends_on:
       - timescale
 
-# 4. TimescaleDB (This IS PostgreSQL + TimeSeries plugin)
+# 4. TimescaleDB (Ports removed - Internal Only)
   timescale:
     image: timescale/timescaledb-ha:pg14-latest
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD} 
@@ -64,7 +56,7 @@ services:
       - postgres-db:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d 
       
-# 5. Keycloak (Identity & Access Management)
+# 5. Keycloak (Identity & Access Management - External)
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
     command: start-dev
@@ -76,7 +68,7 @@ services:
     depends_on:
       - timescale
 
-# 6. Grafana (Time-Series Dashboards)
+# 6. Grafana (Time-Series Dashboards - External)
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -93,19 +85,19 @@ services:
   mosquitto:
     image: eclipse-mosquitto:2.0.18
     hostname: mosquitto
-    ports:
-      - "1883:1883" # Standard MQTT port
-      - "9001:9001" # WebSockets port (optional, good for web dashboards)
+    # NOTE: Uncomment the ports below ONLY IF your IoT devices are external to the host server.
+    # If your devices simulate data from within the same docker network, keep these closed.
+    # ports:
+    #   - "1883:1883" # Standard MQTT port
+    #   - "9001:9001" # WebSockets port (optional, good for web dashboards)
     volumes:
       # Mounts a local config file to allow anonymous local connections 
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
-# 8. FIWARE IoT Agent (JSON over MQTT)
+# 8. FIWARE IoT Agent (Ports removed - Internal Only)
   iot-agent:
     image: fiware/iotagent-json:latest
     hostname: iot-agent
-    ports:
-      - "4041:4041" # Port for provisioning devices via API
     depends_on:
       - mongo
       - mosquitto
@@ -128,6 +120,7 @@ services:
       - IOTA_PROVIDER_URL=http://iot-agent:4041  # Agent's own address for Orion registration
       - IOTA_CB_LD_CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
       - IOTA_TIMESTAMP=true
+
 volumes:
   mongo-db:
   postgres-db:
