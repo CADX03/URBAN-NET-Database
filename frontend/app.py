@@ -8,6 +8,7 @@ import jwt
 import uuid
 import io
 import zipfile
+import time
 from streamlit_oauth import OAuth2Component
 
 from backend.getDataMongoDB import get_sensor_data
@@ -229,6 +230,8 @@ else:
                     temp_dir = tempfile.mkdtemp()
                     
                     try:
+                        start_time = time.perf_counter()
+
                         with st.spinner("Converting large file and splitting into chunks... This might take a moment."):
                             # 2. Run the streaming converter with a 50,000 row limit per file
                             # (Adjust chunk_size if you want larger/smaller files)
@@ -241,7 +244,8 @@ else:
                                 chunk_size=50000 
                             )
                         
-                        st.success(f"✅ Ready! Successfully streamed {row_count} rows into {len(json_files)} files as `{selected_model}`.")
+                        elapsed_time = time.perf_counter() - start_time
+                        st.success(f"✅ Ready! Successfully streamed {row_count} rows into {len(json_files)} files as `{selected_model}` in {elapsed_time:.2f} seconds.")
                         
                         # 3. Create a ZIP file in memory
                         zip_buffer = io.BytesIO()
@@ -308,14 +312,16 @@ else:
                 else:
                     if st.button("Convert to NGSI-LD"):
                         try:
+                            start_time = time.perf_counter()
+
                             with st.spinner("Extracting and processing files..."):
                                 # Pass BOTH the file and the selected domains
                                 converted_zip_buffer = process_gtfs_zip(
                                     uploaded_gtfs_zip, 
                                     selected_domain
                                 )
-                                
-                            st.success("✅ Conversion successful! Your NGSI-LD entities are ready.")
+                            elapsed_time = time.perf_counter() - start_time
+                            st.success(f"✅ Conversion successful in {elapsed_time:.2f} seconds! Your NGSI-LD entities are ready.")
                             
                             st.download_button(
                                 label="📥 Download Converted Data (ZIP)",
@@ -360,6 +366,7 @@ else:
             if uploaded_geojson and entity_type_input and entity_category_input:
                 if st.button("Convert to NGSI-LD", key="btn_convert_geojson"):
                     try:
+                        start_time = time.perf_counter()
                         with st.spinner("Processing GeoJSON..."):
                             # 1. Read the uploaded file into a Python dictionary
                             geojson_data = json.load(uploaded_geojson)
@@ -374,7 +381,8 @@ else:
                             # 3. Convert the Python dictionary back to a formatted JSON string
                             converted_json_str = json.dumps(ngsild_data, indent=2, ensure_ascii=False)
                             
-                        st.success("✅ Conversion successful! Your NGSI-LD entities are ready.")
+                        elapsed_time = time.perf_counter() - start_time
+                        st.success(f"✅ Conversion successful in {elapsed_time:.2f} seconds! Your NGSI-LD entities are ready.")
                         
                         # 4. Provide the download button
                         st.download_button(

@@ -3,6 +3,8 @@ import requests
 import time
 
 def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
+    start_time = time.perf_counter()
+
     # If running this script from your host machine, use localhost. 
     # If running from inside the frontend container, keep 'quantumleap'.
     url = 'http://quantumleap:8668/v2/notify' 
@@ -45,9 +47,10 @@ def send_notification_to_quantumleap_in_batches(file_path, batch_size=500):
             # Brief pause to let QuantumLeap and TimescaleDB breathe
             time.sleep(0.1) 
 
+        elapsed_time = time.perf_counter() - start_time
         # If the loop finishes without raising an exception, return a success summary
-        print(f"All batches sent successfully! Total entities: {total_entities}, Total batches: {batches_sent}")
-        return f"Successfully sent {total_entities} entities across {batches_sent} batches to QuantumLeap."
+        print(f"All batches sent successfully! Total entities: {total_entities}, Total batches: {batches_sent}. Time taken: {elapsed_time:.2f}s")
+        return f"Successfully sent {total_entities} entities across {batches_sent} batches to QuantumLeap in {elapsed_time:.2f} seconds."
 
     except FileNotFoundError:
         print(f"Error: The file '{file_path}' was not found.")

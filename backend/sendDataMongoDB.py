@@ -1,7 +1,10 @@
 import json
 import requests
+import time
 
 def send_data_to_broker(file_path):
+    start_time = time.perf_counter()
+    
     url = 'http://orion:1026/ngsi-ld/v1/entityOperations/upsert'
     
     try:
@@ -29,12 +32,14 @@ def send_data_to_broker(file_path):
         response = requests.post(url, headers=headers, json=raw_payload)
         
         if response.status_code == 201:
+            elapsed_time = time.perf_counter() - start_time
             print("Success! Entity created.")
-            return "Entity created successfully."
+            return f"Entity created successfully in {elapsed_time:.2f} seconds."
         elif response.status_code == 207:
+            elapsed_time = time.perf_counter() - start_time
             print("Batch operation returned 207 (Multi-Status).")
             print(f"Broker Response:\n{json.dumps(response.json(), indent=2)}")
-            return f"Batch operation returned 207 (Multi-Status).\nBroker Response:\n{json.dumps(response.json(), indent=2)}"
+            return f"Batch operation returned 207 (Multi-Status).\nBroker Response:\n{json.dumps(response.json(), indent=2)}\nElapsed Time: {elapsed_time:.2f} seconds."
         else:
             print(f"Failed. Status Code: {response.status_code}")
             print(f"Response: {response.text}")
