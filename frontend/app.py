@@ -263,7 +263,7 @@ else:
                         st.download_button(
                                 label="📥 Download ZIP Archive",
                                 data=zip_buffer,
-                                file_name=f"converted_{selected_model.lower()}_data.zip",
+                                file_name=f"csv_converted_{selected_model.lower()}_data.zip",
                                 mime="application/zip",
                                 use_container_width=True
                             )
@@ -326,7 +326,7 @@ else:
                             st.download_button(
                                 label="📥 Download Converted Data (ZIP)",
                                 data=converted_zip_buffer,
-                                file_name="ngsi_ld_converted_data.zip",
+                                file_name=f"gtfs_converted_{selected_domain.lower()}_data.zip",
                                 mime="application/zip",
                                 use_container_width=True
                             )
