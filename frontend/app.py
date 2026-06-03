@@ -517,7 +517,7 @@ else:
                 st.write("") 
                 refresh = st.button("Fetch Data")
 
-        tab_realtime, tab_history = st.tabs(["⏱️ Current State (MongoDB)", "📈 History (TimescaleDB)"])
+        tab_realtime, tab_history = st.tabs(["⏱️ Real-Time (MongoDB)", "📈 History (TimescaleDB)"])
 
         if refresh:
             # --- Real-time Data (Orion) ---

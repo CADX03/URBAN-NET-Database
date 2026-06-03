@@ -1,360 +1,69 @@
 # URBAN-NET-Database
 
-## WEBSITE
-Start the project
+A collection of utilities and example data for ingesting urban mobility and environmental datasets into databases (MongoDB and TimescaleDB). Includes parsers for CSV, GeoJSON and GTFS, data converters, and scripts to send data to target databases or NGSI-LD endpoints.
+
+## Features
+- Parsers: CSV, GeoJSON, GTFS
+- Converters: convert to NGSI-LD / JSON formats
+- Senders: send data to MongoDB, TimescaleDB, or NGSI-LD
+- Example data and small utilities for testing and local development
+
+## Requirements
+- Python 3.8+ (3.9+ recommended)
+- pip
+- Docker & docker-compose (for running local DBs and brokers)
+
+Install Python dependencies:
 
 ```bash
-docker-compose up --build -d
+python -m venv .venv
+.venv\Scripts\activate    # Windows
+pip install -r requirements.txt
 ```
 
-LINK: http://localhost:8501
+## Quick start
 
-
-Stop the project
-```bash
-docker-compose down -v
-```
-
-## Mongo DB
-First comand:
+1. Start services (optional) — run local DBs / broker with docker-compose:
 
 ```bash
-curl -iX POST 'http://localhost:1026/ngsi-ld/v1/entities' \
--H 'Content-Type: application/json' \
--d '{
-  "id": "urn:ngsi-ld:Sensor:001",
-  "type": "Sensor",
-  "temperature": {
-    "type": "Property",
-    "value": 25.5
-  }
-}'
+docker-compose up -d
 ```
 
-Verify:
-```bash
-curl -X GET 'http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:Sensor:001'
-```
-
-Update the database:
+2. Run a parser or sender script from the `backend` folder. Examples:
 
 ```bash
-curl -iX PATCH 'http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:Sensor:001/attrs' -H 'Content-Type: application/json' -d '{
-  "temperature": {
-    "type": "Property",
-    "value": 28.2
-  }
-}'
+# convert example GTFS -> JSON
+python backend/parserGTFS.py
+
+# send example data to MongoDB
+python backend/sendDataMongoDB.py
+
+# send example data to TimescaleDB
+python backend/sendDataTimescaleDB.py
 ```
 
-Verify Update:
-```bash
-curl -X GET 'http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:Sensor:001'
-```
+See individual script docstrings and `backend` source files for available CLI options and usage.
 
-See the data in the MongoDB
+## Project layout
 
-```bash
-# 1. Access the Mongo container (replace 'mongo' with your actual container name if different)
-docker exec -it $(docker ps -qf "name=mongo") mongo
+- `backend/` — Python scripts and parsers (parserCSV.py, parserGeoJSON.py, parserGTFS.py, sendDataMongoDB.py, sendDataTimescaleDB.py, etc.)
+- `data/` — curated example JSON datasets
+- `dataCSV/`, `dataGeoJSON/`, `dataGTFS/` — raw input datasets and converted outputs
+- `output/` — exported conversion examples
+- `docker-compose.yml`, `Dockerfile`, `mosquitto.conf` — local infrastructure and broker config
 
-# 2. Inside the Mongo shell, switch to the Orion database
-use orion
+## Common workflows
 
-# 3. Find your entities
-db.entities.find().pretty()
-```
+- To convert CSV/GTFS/GeoJSON to NGSI-LD-like JSON, run the corresponding parser in `backend/` and inspect the generated files under `output/` or `dataCSV_JSON/`.
+- To push converted data to a database, configure the connection parameters in the related sender script (or environment variables) and run the sender scripts in `backend/`.
 
-## Timesacle DB
+## Testing and examples
+- Example test files are located under `data/` and `dataCSV/dataCSV_JSON/` — use them to exercise the parsers and senders.
 
-Change to the postgres database and Trigger a Change:
+## Contributing
+Contributions, bug reports and feature requests are welcome. Please open an issue or submit a PR with a clear description and minimal reproduction steps.
 
-```bash
-curl http://localhost:8668/v2/notify -i -H 'Content-Type: application/json' -d @- <<EOF
-{ 
-    "subscriptionId": "5ce3dbb331dfg9h71aad5deeaa", 
-    "data": [ 
-        { 
-            "id": "Room1", 
-            "temperature": { "value": "10", "type": "Number" }, 
-            "pressure": { "value": "12", "type": "Number" }, 
-            "type": "Room" 
-        } 
-    ] 
-}
-EOF
-```
+## License & Contact
+This repository does not include a license file. Contact the maintainer for reuse or distribution questions.
 
-See the change on QuantumLeap API:
-
-```bash
-curl -X GET "http://localhost:8668/v2/entities/Room1"
-```
-
-Query TimescaleDB Directly:
-
-```bash
-#Enter the TimescaleDB container
-docker compose exec timescale psql -U postgres -d postgres
-
-#List the tables
-\dt
-
-#Query the table
-SELECT * FROM etroom;
-```
-
-## Login (Keycloak)
-
-1. Go to http://localhost:8080 and log in with the credentials admin / admin.
-
-2. Create a Realm: Hover over the "master" realm in the top-left dropdown and click Create Realm. Name it fiware-realm.
-
-3. Create a Client: * Go to Clients -> Create client.
-
-  - Client ID: streamlit-app
-
-  - Click Next. Ensure "Standard flow" (OAuth2) is enabled.
-
-  - Click Next.
-
-  - Valid redirect URIs: http://localhost:8501/* (This is crucial; it tells Keycloak it's safe to send tokens back to your Streamlit UI).
-
-  - Web origins: http://localhost:8501
-
-  - Click Save.
-
-4. Create a User:
-
-  - Go to Users -> Add user. Set a username (e.g., testuser) and click Create.
-
-  - Go to the Credentials tab for that user, click Set password, type a password, and toggle "Temporary" to Off.
-
-5. Create a Role:
-
-  - Created a Realm Role named admin.
-
-  - Assigned that admin role to your test user.
-
-  - Ensured that Client Scopes -> roles -> Mappers -> realm roles is configured to add the realm roles to the Access Token. (This is usually configured this way by default in modern Keycloak versions).
-
-### How to enable the register:
-
-1. Log in to your Keycloak Admin Console (e.g., http://localhost:8080).
-
-2. Select your realm (fiware-realm).
-
-3. On the left sidebar, go to Realm Settings.
-
-4. Click on the Login tab.
-
-5. Toggle User registration to ON.
-
-6. Save your changes.
-
-
-## Grafana (Visualization)
-
-Once the container is running, open your browser and go to http://localhost:3000. 
-
-1. Log in with admin / admin. 
-
-2. Now, you need to link Grafana to your database. In the left-hand menu, go to Connections -> Data sources.
-
-3. Click Add data source and search for PostgreSQL.
-
-4. Fill in the connection details using the internal Docker network names from your compose file:
-  - Host: timescale:5432
-
-  - Database: postgres 
-
-  - User: postgres
-
-  - Password: password
-
-  - TLS/SSL Mode: disable
-
-5. Under the PostgreSQL details section, make sure to enable the TimescaleDB toggle.
-
-6. Click Save & test. You should get a green notification saying the database connection is okay.
-
-To read the geoJson type data, this examples will help:
-
-```sql
-  -- As human-readable text (WKT format)
-  SELECT ST_AsText(location) FROM etgtfsstop;
-  -- Result: POINT(-8.57522842559986 41.2098796212627)
-
-  -- As GeoJSON
-  SELECT ST_AsGeoJSON(location) FROM etgtfsstop;
-  -- Result: {"type":"Point","coordinates":[-8.575228425599860,41.209879621262700]}
-
-  -- As latitude/longitude separately
-  SELECT 
-    ST_X(location) AS longitude,
-    ST_Y(location) AS latitude
-  FROM etgtfsstop;
-```
-## Mosquitto / IoT Agent
-
-```bash
-curl -iX POST \
-  'http://localhost:4041/iot/services' \
-  -H 'Content-Type: application/json' \
-  -H 'fiware-service: openiot' \
-  -H 'fiware-servicepath: /' \
-  -d '{
-    "services": [{
-      "apikey": "my-secret-key",
-      "cbroker": "http://orion:1026",
-      "entity_type": "Sensor",
-      "resource": "/iot/json"
-    }]
-  }'
-```
-
-```bash
-curl -iX POST \
-  'http://localhost:4041/iot/devices' \
-  -H 'Content-Type: application/json' \
-  -H 'fiware-service: openiot' \
-  -H 'fiware-servicepath: /' \
-  -d '{
-    "devices": [{
-      "device_id": "sensor001",
-      "entity_name": "urn:ngsi-ld:Sensor:001",
-      "entity_type": "Sensor",
-      "protocol": "IoTA-JSON",
-      "transport": "MQTT",
-      "apikey": "my-secret-key",
-      "attributes": [
-        { "object_id": "t", "name": "temperature", "type": "Property" }
-      ]
-    }]
-  }'
-```
-
-```bash
-curl -iX POST \
-  'http://localhost:1026/ngsi-ld/v1/subscriptions/' \
-  -H 'Content-Type: application/ld+json' \
-  -H 'fiware-service: openiot' \
-  -H 'fiware-servicepath: /' \
-  -d '{
-  "description": "Notify QuantumLeap of temperature changes",
-  "type": "Subscription",
-  "entities": [{"type": "Sensor"}],
-  "watchedAttributes": ["temperature"],
-  "notification": {
-    "attributes": ["temperature"],
-    "format": "normalized",
-    "endpoint": {
-      "uri": "http://quantumleap:8668/v2/notify",
-      "accept": "application/json"
-    }
-  },
-  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-}'
-```
-
-```bash
-# Publish MQTT message
-docker exec -it urban-net-database-mosquitto-1 \
-  mosquitto_pub -h localhost \
-  -t "/my-secret-key/sensor001/attrs" \
-  -m '{"t": 24.5}'
-
-# Wait 2-3 seconds, then query Orion
-curl -X GET \
-  'http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:Sensor:001' \
-  -H 'NGSILD-Tenant: openiot' \ 
-  -H 'Accept: application/ld+json'
-```
-
-### Test for real time case
-
-1. Step 1 — Provision service
-  - This step groups your devices together. You can leave the resource and context broker as their defaults.
-
-  - API key: traffic-key (or any unique string, just be consistent)
-
-  - Entity type: TrafficFlowObserved
-
-  - Resource: /iot/json
-
-  - Context broker: http://orion:1026
-
-2. Step 2 — Provision device
-  - This maps the simple JSON keys coming from your MQTT device (object_id) to the formal NGSI-LD attributes (name). We will use identical names for simplicity.
-
-  - Device ID: traffic001
-
-  - Entity name: urn:ngsi-ld:TrafficFlowObserved:9577808
-
-  - Entity type: TrafficFlowObserved
-
-  - API key: traffic-key (must exactly match Step 1)
-
-  - Attributes (JSON list): Copy and paste the following block:
-  ```json
-  [
-    {"object_id": "dateObserved", "name": "dateObserved", "type": "Property"},
-    {"object_id": "equipmentId", "name": "equipmentId", "type": "Property"},
-    {"object_id": "laneDirection", "name": "laneDirection", "type": "Property"},
-    {"object_id": "intensity", "name": "intensity", "type": "Property"},
-    {"object_id": "averageVehicleSpeed", "name": "averageVehicleSpeed", "type": "Property"},
-    {"object_id": "occupancy", "name": "occupancy", "type": "Property"},
-    {"object_id": "AGG_ID", "name": "AGG_ID", "type": "Property"},
-    {"object_id": "AGG_PERIOD_LEN_MINS", "name": "AGG_PERIOD_LEN_MINS", "type": "Property"},
-    {"object_id": "NR_LANES", "name": "NR_LANES", "type": "Property"},
-    {"object_id": "AVG_SPEED_HARMONIC", "name": "AVG_SPEED_HARMONIC", "type": "Property"},
-    {"object_id": "AVG_LENGTH", "name": "AVG_LENGTH", "type": "Property"},
-    {"object_id": "AVG_SPACING", "name": "AVG_SPACING", "type": "Property"},
-    {"object_id": "LIGHT_VEHICLE_RATE", "name": "LIGHT_VEHICLE_RATE", "type": "Property"},
-    {"object_id": "VOLUME_CLASSE_A", "name": "VOLUME_CLASSE_A", "type": "Property"},
-    {"object_id": "VOLUME_CLASSE_B", "name": "VOLUME_CLASSE_B", "type": "Property"},
-    {"object_id": "VOLUME_CLASSE_C", "name": "VOLUME_CLASSE_C", "type": "Property"},
-    {"object_id": "VOLUME_CLASSE_D", "name": "VOLUME_CLASSE_D", "type": "Property"},
-    {"object_id": "VOLUME_CLASSE_0", "name": "VOLUME_CLASSE_0", "type": "Property"},
-    {"object_id": "axleClassVolumes", "name": "axleClassVolumes", "type": "Property"}
-  ]
-  ```
-
-3. Step 3 — Publish MQTT message
-  - Now you simulate the actual IoT sensor sending its readings. The IoT Agent handles wrapping these in the {"type": "Property", "value": ...} NGSI-LD structure, so your payload should just be the raw values.
-
-  - API key: traffic-key
-
-  - Device ID: traffic001
-
-  - Payload: Copy and paste the following block:
-  ```json
-  {
-    "dateObserved": "2015-01-01T11:55:00Z",
-    "equipmentId": "121729",
-    "laneDirection": "D",
-    "intensity": 48,
-    "averageVehicleSpeed": 97.77,
-    "occupancy": 1.54,
-    "AGG_ID": 448873,
-    "AGG_PERIOD_LEN_MINS": 5,
-    "NR_LANES": 3,
-    "AVG_SPEED_HARMONIC": 94.9,
-    "AVG_LENGTH": 443.75,
-    "AVG_SPACING": 283.4,
-    "LIGHT_VEHICLE_RATE": 100,
-    "VOLUME_CLASSE_A": 0,
-    "VOLUME_CLASSE_B": 48,
-    "VOLUME_CLASSE_C": 0,
-    "VOLUME_CLASSE_D": 0,
-    "VOLUME_CLASSE_0": 0,
-    "axleClassVolumes": { "E2": 48 }
-  }
-  ```
-
-4. Step 4 — Query Orion-LD
-  - Once the MQTT message is successfully published, the IoT agent will process it and update the context broker. You can verify the final NGSI-LD structure here.
-
-  - Entity ID: urn:ngsi-ld:TrafficFlowObserved:9577808
-
-  - Tenant: openiot
+For questions or help, open an issue or contact the project owner.
